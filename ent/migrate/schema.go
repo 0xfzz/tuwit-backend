@@ -66,18 +66,6 @@ var (
 		{Name: "is_verified", Type: field.TypeBool, Default: false},
 		{Name: "is_private", Type: field.TypeBool, Default: false},
 		{Name: "is_email_verified", Type: field.TypeBool, Default: false},
-	}
-	// UserAccountTable holds the schema information for the "user_account" table.
-	UserAccountTable = &schema.Table{
-		Name:       "user_account",
-		Columns:    UserAccountColumns,
-		PrimaryKey: []*schema.Column{UserAccountColumns[0]},
-	}
-	// UserAccountColumns holds the columns for the "user_account" table.
-	UserAccountColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "follower_count", Type: field.TypeInt, Default: 0},
-		{Name: "followings_count", Type: field.TypeInt, Default: 0},
 		{Name: "user_account_user_count_info", Type: field.TypeInt, Nullable: true},
 	}
 	// UserAccountTable holds the schema information for the "user_account" table.
@@ -87,12 +75,24 @@ var (
 		PrimaryKey: []*schema.Column{UserAccountColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "user_account_user_account_user_count_info",
-				Columns:    []*schema.Column{UserAccountColumns[3]},
-				RefColumns: []*schema.Column{UserAccountColumns[0]},
+				Symbol:     "user_account_user_count_user_count_info",
+				Columns:    []*schema.Column{UserAccountColumns[7]},
+				RefColumns: []*schema.Column{UserCountColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
+	}
+	// UserCountColumns holds the columns for the "user_count" table.
+	UserCountColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "follower_count", Type: field.TypeInt, Default: 0},
+		{Name: "followings_count", Type: field.TypeInt, Default: 0},
+	}
+	// UserCountTable holds the schema information for the "user_count" table.
+	UserCountTable = &schema.Table{
+		Name:       "user_count",
+		Columns:    UserCountColumns,
+		PrimaryKey: []*schema.Column{UserCountColumns[0]},
 	}
 	// UserProfileColumns holds the columns for the "user_profile" table.
 	UserProfileColumns = []*schema.Column{
@@ -210,7 +210,7 @@ var (
 		ThreadsTable,
 		ThreadAccountTable,
 		UserAccountTable,
-		UserAccountTable,
+		UserCountTable,
 		UserProfileTable,
 		ThreadImagesTable,
 		UserAccountFollowingTable,
@@ -223,12 +223,12 @@ func init() {
 	ThreadAccountTable.Annotation = &entsql.Annotation{
 		Table: "thread_account",
 	}
+	UserAccountTable.ForeignKeys[0].RefTable = UserCountTable
 	UserAccountTable.Annotation = &entsql.Annotation{
 		Table: "user_account",
 	}
-	UserAccountTable.ForeignKeys[0].RefTable = UserAccountTable
-	UserAccountTable.Annotation = &entsql.Annotation{
-		Table: "user_account",
+	UserCountTable.Annotation = &entsql.Annotation{
+		Table: "user_count",
 	}
 	UserProfileTable.ForeignKeys[0].RefTable = UserAccountTable
 	UserProfileTable.ForeignKeys[1].RefTable = MediaTable

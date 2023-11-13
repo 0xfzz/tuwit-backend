@@ -55,6 +55,9 @@ const (
 	BlockedUserTable = "user_account_blocked_user"
 	// UserCountInfoTable is the table that holds the user_count_info relation/edge.
 	UserCountInfoTable = "user_account"
+	// UserCountInfoInverseTable is the table name for the UserCount entity.
+	// It exists in this package in order to avoid circular dependency with the "usercount" package.
+	UserCountInfoInverseTable = "user_count"
 	// UserCountInfoColumn is the table column denoting the user_count_info relation/edge.
 	UserCountInfoColumn = "user_account_user_count_info"
 )
@@ -260,7 +263,7 @@ func newBlockedUserStep() *sqlgraph.Step {
 func newUserCountInfoStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
+		sqlgraph.To(UserCountInfoInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, UserCountInfoTable, UserCountInfoColumn),
 	)
 }

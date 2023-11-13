@@ -15,7 +15,7 @@ type UserCount struct {
 
 func (UserCount) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "user_account"},
+		entsql.Annotation{Table: "user_count"},
 	}
 }
 

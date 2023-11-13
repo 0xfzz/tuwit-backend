@@ -19,9 +19,12 @@ const (
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// Table holds the table name of the usercount in the database.
-	Table = "user_account"
+	Table = "user_count"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "user_account"
+	// UserInverseTable is the table name for the UserAccount entity.
+	// It exists in this package in order to avoid circular dependency with the "useraccount" package.
+	UserInverseTable = "user_account"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "user_account_user_count_info"
 )
@@ -84,7 +87,7 @@ func ByUser(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
+		sqlgraph.To(UserInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, true, UserTable, UserColumn),
 	)
 }
