@@ -1,9 +1,11 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/0xfzz/tuwitt/bootstrap"
+	"github.com/joho/godotenv"
+)
 
 func main() {
-	app := gin.New()
-
-	app.Run(":1337")
+	_ = godotenv.Load()
+	bootstrap.Start()
 }

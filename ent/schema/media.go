@@ -23,5 +23,7 @@ func (Media) Fields() []ent.Field {
 func (Media) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("threads", Thread.Type).Ref("images"),
+		edge.From("owner_profile_picture", UserProfile.Type).Ref("profile_picture"),
+		edge.From("owner_banner", UserProfile.Type).Ref("banner"),
 	}
 }
