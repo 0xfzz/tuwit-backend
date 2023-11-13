@@ -331,6 +331,121 @@ func HasProfileWith(preds ...predicate.UserProfile) predicate.UserAccount {
 	})
 }
 
+// HasFollowers applies the HasEdge predicate on the "followers" edge.
+func HasFollowers() predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, FollowersTable, FollowersPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFollowersWith applies the HasEdge predicate on the "followers" edge with a given conditions (other predicates).
+func HasFollowersWith(preds ...predicate.UserAccount) predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := newFollowersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasFollowing applies the HasEdge predicate on the "following" edge.
+func HasFollowing() predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, FollowingTable, FollowingPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFollowingWith applies the HasEdge predicate on the "following" edge with a given conditions (other predicates).
+func HasFollowingWith(preds ...predicate.UserAccount) predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := newFollowingStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBlockedBy applies the HasEdge predicate on the "blocked_by" edge.
+func HasBlockedBy() predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, BlockedByTable, BlockedByPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBlockedByWith applies the HasEdge predicate on the "blocked_by" edge with a given conditions (other predicates).
+func HasBlockedByWith(preds ...predicate.UserAccount) predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := newBlockedByStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBlockedUser applies the HasEdge predicate on the "blocked_user" edge.
+func HasBlockedUser() predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, BlockedUserTable, BlockedUserPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBlockedUserWith applies the HasEdge predicate on the "blocked_user" edge with a given conditions (other predicates).
+func HasBlockedUserWith(preds ...predicate.UserAccount) predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := newBlockedUserStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasUserCountInfo applies the HasEdge predicate on the "user_count_info" edge.
+func HasUserCountInfo() predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, UserCountInfoTable, UserCountInfoColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUserCountInfoWith applies the HasEdge predicate on the "user_count_info" edge with a given conditions (other predicates).
+func HasUserCountInfoWith(preds ...predicate.UserCount) predicate.UserAccount {
+	return predicate.UserAccount(func(s *sql.Selector) {
+		step := newUserCountInfoStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.UserAccount) predicate.UserAccount {
 	return predicate.UserAccount(sql.AndPredicates(predicates...))

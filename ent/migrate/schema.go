@@ -45,15 +45,17 @@ var (
 			},
 		},
 	}
-	// UsersColumns holds the columns for the "users" table.
-	UsersColumns = []*schema.Column{
+	// ThreadAccountColumns holds the columns for the "thread_account" table.
+	ThreadAccountColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "reply_count", Type: field.TypeInt, Default: 0},
+		{Name: "like_count", Type: field.TypeInt, Default: 0},
 	}
-	// UsersTable holds the schema information for the "users" table.
-	UsersTable = &schema.Table{
-		Name:       "users",
-		Columns:    UsersColumns,
-		PrimaryKey: []*schema.Column{UsersColumns[0]},
+	// ThreadAccountTable holds the schema information for the "thread_account" table.
+	ThreadAccountTable = &schema.Table{
+		Name:       "thread_account",
+		Columns:    ThreadAccountColumns,
+		PrimaryKey: []*schema.Column{ThreadAccountColumns[0]},
 	}
 	// UserAccountColumns holds the columns for the "user_account" table.
 	UserAccountColumns = []*schema.Column{
@@ -70,6 +72,27 @@ var (
 		Name:       "user_account",
 		Columns:    UserAccountColumns,
 		PrimaryKey: []*schema.Column{UserAccountColumns[0]},
+	}
+	// UserAccountColumns holds the columns for the "user_account" table.
+	UserAccountColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "follower_count", Type: field.TypeInt, Default: 0},
+		{Name: "followings_count", Type: field.TypeInt, Default: 0},
+		{Name: "user_account_user_count_info", Type: field.TypeInt, Nullable: true},
+	}
+	// UserAccountTable holds the schema information for the "user_account" table.
+	UserAccountTable = &schema.Table{
+		Name:       "user_account",
+		Columns:    UserAccountColumns,
+		PrimaryKey: []*schema.Column{UserAccountColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_account_user_account_user_count_info",
+				Columns:    []*schema.Column{UserAccountColumns[3]},
+				RefColumns: []*schema.Column{UserAccountColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// UserProfileColumns holds the columns for the "user_profile" table.
 	UserProfileColumns = []*schema.Column{
@@ -131,19 +154,79 @@ var (
 			},
 		},
 	}
+	// UserAccountFollowingColumns holds the columns for the "user_account_following" table.
+	UserAccountFollowingColumns = []*schema.Column{
+		{Name: "user_account_id", Type: field.TypeInt},
+		{Name: "follower_id", Type: field.TypeInt},
+	}
+	// UserAccountFollowingTable holds the schema information for the "user_account_following" table.
+	UserAccountFollowingTable = &schema.Table{
+		Name:       "user_account_following",
+		Columns:    UserAccountFollowingColumns,
+		PrimaryKey: []*schema.Column{UserAccountFollowingColumns[0], UserAccountFollowingColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_account_following_user_account_id",
+				Columns:    []*schema.Column{UserAccountFollowingColumns[0]},
+				RefColumns: []*schema.Column{UserAccountColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_account_following_follower_id",
+				Columns:    []*schema.Column{UserAccountFollowingColumns[1]},
+				RefColumns: []*schema.Column{UserAccountColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserAccountBlockedUserColumns holds the columns for the "user_account_blocked_user" table.
+	UserAccountBlockedUserColumns = []*schema.Column{
+		{Name: "user_account_id", Type: field.TypeInt},
+		{Name: "blocked_by_id", Type: field.TypeInt},
+	}
+	// UserAccountBlockedUserTable holds the schema information for the "user_account_blocked_user" table.
+	UserAccountBlockedUserTable = &schema.Table{
+		Name:       "user_account_blocked_user",
+		Columns:    UserAccountBlockedUserColumns,
+		PrimaryKey: []*schema.Column{UserAccountBlockedUserColumns[0], UserAccountBlockedUserColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_account_blocked_user_user_account_id",
+				Columns:    []*schema.Column{UserAccountBlockedUserColumns[0]},
+				RefColumns: []*schema.Column{UserAccountColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_account_blocked_user_blocked_by_id",
+				Columns:    []*schema.Column{UserAccountBlockedUserColumns[1]},
+				RefColumns: []*schema.Column{UserAccountColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		MediaTable,
 		ThreadsTable,
-		UsersTable,
+		ThreadAccountTable,
+		UserAccountTable,
 		UserAccountTable,
 		UserProfileTable,
 		ThreadImagesTable,
+		UserAccountFollowingTable,
+		UserAccountBlockedUserTable,
 	}
 )
 
 func init() {
 	ThreadsTable.ForeignKeys[0].RefTable = ThreadsTable
+	ThreadAccountTable.Annotation = &entsql.Annotation{
+		Table: "thread_account",
+	}
+	UserAccountTable.Annotation = &entsql.Annotation{
+		Table: "user_account",
+	}
+	UserAccountTable.ForeignKeys[0].RefTable = UserAccountTable
 	UserAccountTable.Annotation = &entsql.Annotation{
 		Table: "user_account",
 	}
@@ -155,4 +238,8 @@ func init() {
 	}
 	ThreadImagesTable.ForeignKeys[0].RefTable = ThreadsTable
 	ThreadImagesTable.ForeignKeys[1].RefTable = MediaTable
+	UserAccountFollowingTable.ForeignKeys[0].RefTable = UserAccountTable
+	UserAccountFollowingTable.ForeignKeys[1].RefTable = UserAccountTable
+	UserAccountBlockedUserTable.ForeignKeys[0].RefTable = UserAccountTable
+	UserAccountBlockedUserTable.ForeignKeys[1].RefTable = UserAccountTable
 }

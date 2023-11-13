@@ -26,6 +26,16 @@ const (
 	FieldIsEmailVerified = "is_email_verified"
 	// EdgeProfile holds the string denoting the profile edge name in mutations.
 	EdgeProfile = "profile"
+	// EdgeFollowers holds the string denoting the followers edge name in mutations.
+	EdgeFollowers = "followers"
+	// EdgeFollowing holds the string denoting the following edge name in mutations.
+	EdgeFollowing = "following"
+	// EdgeBlockedBy holds the string denoting the blocked_by edge name in mutations.
+	EdgeBlockedBy = "blocked_by"
+	// EdgeBlockedUser holds the string denoting the blocked_user edge name in mutations.
+	EdgeBlockedUser = "blocked_user"
+	// EdgeUserCountInfo holds the string denoting the user_count_info edge name in mutations.
+	EdgeUserCountInfo = "user_count_info"
 	// Table holds the table name of the useraccount in the database.
 	Table = "user_account"
 	// ProfileTable is the table that holds the profile relation/edge.
@@ -35,6 +45,18 @@ const (
 	ProfileInverseTable = "user_profile"
 	// ProfileColumn is the table column denoting the profile relation/edge.
 	ProfileColumn = "user_account_profile"
+	// FollowersTable is the table that holds the followers relation/edge. The primary key declared below.
+	FollowersTable = "user_account_following"
+	// FollowingTable is the table that holds the following relation/edge. The primary key declared below.
+	FollowingTable = "user_account_following"
+	// BlockedByTable is the table that holds the blocked_by relation/edge. The primary key declared below.
+	BlockedByTable = "user_account_blocked_user"
+	// BlockedUserTable is the table that holds the blocked_user relation/edge. The primary key declared below.
+	BlockedUserTable = "user_account_blocked_user"
+	// UserCountInfoTable is the table that holds the user_count_info relation/edge.
+	UserCountInfoTable = "user_account"
+	// UserCountInfoColumn is the table column denoting the user_count_info relation/edge.
+	UserCountInfoColumn = "user_account_user_count_info"
 )
 
 // Columns holds all SQL columns for useraccount fields.
@@ -48,10 +70,36 @@ var Columns = []string{
 	FieldIsEmailVerified,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "user_account"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"user_account_user_count_info",
+}
+
+var (
+	// FollowersPrimaryKey and FollowersColumn2 are the table columns denoting the
+	// primary key for the followers relation (M2M).
+	FollowersPrimaryKey = []string{"user_account_id", "follower_id"}
+	// FollowingPrimaryKey and FollowingColumn2 are the table columns denoting the
+	// primary key for the following relation (M2M).
+	FollowingPrimaryKey = []string{"user_account_id", "follower_id"}
+	// BlockedByPrimaryKey and BlockedByColumn2 are the table columns denoting the
+	// primary key for the blocked_by relation (M2M).
+	BlockedByPrimaryKey = []string{"user_account_id", "blocked_by_id"}
+	// BlockedUserPrimaryKey and BlockedUserColumn2 are the table columns denoting the
+	// primary key for the blocked_user relation (M2M).
+	BlockedUserPrimaryKey = []string{"user_account_id", "blocked_by_id"}
+)
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -111,10 +159,108 @@ func ByProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newProfileStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByFollowersCount orders the results by followers count.
+func ByFollowersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newFollowersStep(), opts...)
+	}
+}
+
+// ByFollowers orders the results by followers terms.
+func ByFollowers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFollowersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByFollowingCount orders the results by following count.
+func ByFollowingCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newFollowingStep(), opts...)
+	}
+}
+
+// ByFollowing orders the results by following terms.
+func ByFollowing(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFollowingStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByBlockedByCount orders the results by blocked_by count.
+func ByBlockedByCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBlockedByStep(), opts...)
+	}
+}
+
+// ByBlockedBy orders the results by blocked_by terms.
+func ByBlockedBy(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBlockedByStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByBlockedUserCount orders the results by blocked_user count.
+func ByBlockedUserCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBlockedUserStep(), opts...)
+	}
+}
+
+// ByBlockedUser orders the results by blocked_user terms.
+func ByBlockedUser(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBlockedUserStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByUserCountInfoField orders the results by user_count_info field.
+func ByUserCountInfoField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserCountInfoStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newProfileStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProfileInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, ProfileTable, ProfileColumn),
+	)
+}
+func newFollowersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, FollowersTable, FollowersPrimaryKey...),
+	)
+}
+func newFollowingStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, FollowingTable, FollowingPrimaryKey...),
+	)
+}
+func newBlockedByStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, BlockedByTable, BlockedByPrimaryKey...),
+	)
+}
+func newBlockedUserStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, BlockedUserTable, BlockedUserPrimaryKey...),
+	)
+}
+func newUserCountInfoStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, UserCountInfoTable, UserCountInfoColumn),
 	)
 }

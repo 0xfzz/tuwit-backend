@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -31,17 +32,28 @@ type UserAccount struct {
 	IsEmailVerified bool `json:"is_email_verified,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserAccountQuery when eager-loading is set.
-	Edges        UserAccountEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges                        UserAccountEdges `json:"edges"`
+	user_account_user_count_info *int
+	selectValues                 sql.SelectValues
 }
 
 // UserAccountEdges holds the relations/edges for other nodes in the graph.
 type UserAccountEdges struct {
 	// Profile holds the value of the profile edge.
 	Profile *UserProfile `json:"profile,omitempty"`
+	// Followers holds the value of the followers edge.
+	Followers []*UserAccount `json:"followers,omitempty"`
+	// Following holds the value of the following edge.
+	Following []*UserAccount `json:"following,omitempty"`
+	// BlockedBy holds the value of the blocked_by edge.
+	BlockedBy []*UserAccount `json:"blocked_by,omitempty"`
+	// BlockedUser holds the value of the blocked_user edge.
+	BlockedUser []*UserAccount `json:"blocked_user,omitempty"`
+	// UserCountInfo holds the value of the user_count_info edge.
+	UserCountInfo *UserCount `json:"user_count_info,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [6]bool
 }
 
 // ProfileOrErr returns the Profile value or an error if the edge
@@ -57,6 +69,55 @@ func (e UserAccountEdges) ProfileOrErr() (*UserProfile, error) {
 	return nil, &NotLoadedError{edge: "profile"}
 }
 
+// FollowersOrErr returns the Followers value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) FollowersOrErr() ([]*UserAccount, error) {
+	if e.loadedTypes[1] {
+		return e.Followers, nil
+	}
+	return nil, &NotLoadedError{edge: "followers"}
+}
+
+// FollowingOrErr returns the Following value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) FollowingOrErr() ([]*UserAccount, error) {
+	if e.loadedTypes[2] {
+		return e.Following, nil
+	}
+	return nil, &NotLoadedError{edge: "following"}
+}
+
+// BlockedByOrErr returns the BlockedBy value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) BlockedByOrErr() ([]*UserAccount, error) {
+	if e.loadedTypes[3] {
+		return e.BlockedBy, nil
+	}
+	return nil, &NotLoadedError{edge: "blocked_by"}
+}
+
+// BlockedUserOrErr returns the BlockedUser value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) BlockedUserOrErr() ([]*UserAccount, error) {
+	if e.loadedTypes[4] {
+		return e.BlockedUser, nil
+	}
+	return nil, &NotLoadedError{edge: "blocked_user"}
+}
+
+// UserCountInfoOrErr returns the UserCountInfo value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserAccountEdges) UserCountInfoOrErr() (*UserCount, error) {
+	if e.loadedTypes[5] {
+		if e.UserCountInfo == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: usercount.Label}
+		}
+		return e.UserCountInfo, nil
+	}
+	return nil, &NotLoadedError{edge: "user_count_info"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*UserAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -68,6 +129,8 @@ func (*UserAccount) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case useraccount.FieldEmail, useraccount.FieldUsername, useraccount.FieldPassword:
 			values[i] = new(sql.NullString)
+		case useraccount.ForeignKeys[0]: // user_account_user_count_info
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -125,6 +188,13 @@ func (ua *UserAccount) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				ua.IsEmailVerified = value.Bool
 			}
+		case useraccount.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_account_user_count_info", value)
+			} else if value.Valid {
+				ua.user_account_user_count_info = new(int)
+				*ua.user_account_user_count_info = int(value.Int64)
+			}
 		default:
 			ua.selectValues.Set(columns[i], values[i])
 		}
@@ -141,6 +211,31 @@ func (ua *UserAccount) Value(name string) (ent.Value, error) {
 // QueryProfile queries the "profile" edge of the UserAccount entity.
 func (ua *UserAccount) QueryProfile() *UserProfileQuery {
 	return NewUserAccountClient(ua.config).QueryProfile(ua)
+}
+
+// QueryFollowers queries the "followers" edge of the UserAccount entity.
+func (ua *UserAccount) QueryFollowers() *UserAccountQuery {
+	return NewUserAccountClient(ua.config).QueryFollowers(ua)
+}
+
+// QueryFollowing queries the "following" edge of the UserAccount entity.
+func (ua *UserAccount) QueryFollowing() *UserAccountQuery {
+	return NewUserAccountClient(ua.config).QueryFollowing(ua)
+}
+
+// QueryBlockedBy queries the "blocked_by" edge of the UserAccount entity.
+func (ua *UserAccount) QueryBlockedBy() *UserAccountQuery {
+	return NewUserAccountClient(ua.config).QueryBlockedBy(ua)
+}
+
+// QueryBlockedUser queries the "blocked_user" edge of the UserAccount entity.
+func (ua *UserAccount) QueryBlockedUser() *UserAccountQuery {
+	return NewUserAccountClient(ua.config).QueryBlockedUser(ua)
+}
+
+// QueryUserCountInfo queries the "user_count_info" edge of the UserAccount entity.
+func (ua *UserAccount) QueryUserCountInfo() *UserCountQuery {
+	return NewUserAccountClient(ua.config).QueryUserCountInfo(ua)
 }
 
 // Update returns a builder for updating this UserAccount.

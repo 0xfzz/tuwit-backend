@@ -16,10 +16,12 @@ type Tx struct {
 	Media *MediaClient
 	// Thread is the client for interacting with the Thread builders.
 	Thread *ThreadClient
-	// User is the client for interacting with the User builders.
-	User *UserClient
+	// ThreadCount is the client for interacting with the ThreadCount builders.
+	ThreadCount *ThreadCountClient
 	// UserAccount is the client for interacting with the UserAccount builders.
 	UserAccount *UserAccountClient
+	// UserCount is the client for interacting with the UserCount builders.
+	UserCount *UserCountClient
 	// UserProfile is the client for interacting with the UserProfile builders.
 	UserProfile *UserProfileClient
 
@@ -155,8 +157,9 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Media = NewMediaClient(tx.config)
 	tx.Thread = NewThreadClient(tx.config)
-	tx.User = NewUserClient(tx.config)
+	tx.ThreadCount = NewThreadCountClient(tx.config)
 	tx.UserAccount = NewUserAccountClient(tx.config)
+	tx.UserCount = NewUserCountClient(tx.config)
 	tx.UserProfile = NewUserProfileClient(tx.config)
 }
 

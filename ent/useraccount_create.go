@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -97,6 +98,85 @@ func (uac *UserAccountCreate) SetNillableProfileID(id *int) *UserAccountCreate {
 // SetProfile sets the "profile" edge to the UserProfile entity.
 func (uac *UserAccountCreate) SetProfile(u *UserProfile) *UserAccountCreate {
 	return uac.SetProfileID(u.ID)
+}
+
+// AddFollowerIDs adds the "followers" edge to the UserAccount entity by IDs.
+func (uac *UserAccountCreate) AddFollowerIDs(ids ...int) *UserAccountCreate {
+	uac.mutation.AddFollowerIDs(ids...)
+	return uac
+}
+
+// AddFollowers adds the "followers" edges to the UserAccount entity.
+func (uac *UserAccountCreate) AddFollowers(u ...*UserAccount) *UserAccountCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uac.AddFollowerIDs(ids...)
+}
+
+// AddFollowingIDs adds the "following" edge to the UserAccount entity by IDs.
+func (uac *UserAccountCreate) AddFollowingIDs(ids ...int) *UserAccountCreate {
+	uac.mutation.AddFollowingIDs(ids...)
+	return uac
+}
+
+// AddFollowing adds the "following" edges to the UserAccount entity.
+func (uac *UserAccountCreate) AddFollowing(u ...*UserAccount) *UserAccountCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uac.AddFollowingIDs(ids...)
+}
+
+// AddBlockedByIDs adds the "blocked_by" edge to the UserAccount entity by IDs.
+func (uac *UserAccountCreate) AddBlockedByIDs(ids ...int) *UserAccountCreate {
+	uac.mutation.AddBlockedByIDs(ids...)
+	return uac
+}
+
+// AddBlockedBy adds the "blocked_by" edges to the UserAccount entity.
+func (uac *UserAccountCreate) AddBlockedBy(u ...*UserAccount) *UserAccountCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uac.AddBlockedByIDs(ids...)
+}
+
+// AddBlockedUserIDs adds the "blocked_user" edge to the UserAccount entity by IDs.
+func (uac *UserAccountCreate) AddBlockedUserIDs(ids ...int) *UserAccountCreate {
+	uac.mutation.AddBlockedUserIDs(ids...)
+	return uac
+}
+
+// AddBlockedUser adds the "blocked_user" edges to the UserAccount entity.
+func (uac *UserAccountCreate) AddBlockedUser(u ...*UserAccount) *UserAccountCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uac.AddBlockedUserIDs(ids...)
+}
+
+// SetUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID.
+func (uac *UserAccountCreate) SetUserCountInfoID(id int) *UserAccountCreate {
+	uac.mutation.SetUserCountInfoID(id)
+	return uac
+}
+
+// SetNillableUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID if the given value is not nil.
+func (uac *UserAccountCreate) SetNillableUserCountInfoID(id *int) *UserAccountCreate {
+	if id != nil {
+		uac = uac.SetUserCountInfoID(*id)
+	}
+	return uac
+}
+
+// SetUserCountInfo sets the "user_count_info" edge to the UserCount entity.
+func (uac *UserAccountCreate) SetUserCountInfo(u *UserCount) *UserAccountCreate {
+	return uac.SetUserCountInfoID(u.ID)
 }
 
 // Mutation returns the UserAccountMutation object of the builder.
@@ -232,6 +312,87 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.FollowersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   useraccount.FollowersTable,
+			Columns: useraccount.FollowersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.FollowingIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   useraccount.FollowingTable,
+			Columns: useraccount.FollowingPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.BlockedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   useraccount.BlockedByTable,
+			Columns: useraccount.BlockedByPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.BlockedUserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   useraccount.BlockedUserTable,
+			Columns: useraccount.BlockedUserPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.UserCountInfoIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   useraccount.UserCountInfoTable,
+			Columns: []string{useraccount.UserCountInfoColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_account_user_count_info = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

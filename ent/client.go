@@ -17,8 +17,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/thread"
-	"github.com/0xfzz/tuwitt/ent/user"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -31,10 +32,12 @@ type Client struct {
 	Media *MediaClient
 	// Thread is the client for interacting with the Thread builders.
 	Thread *ThreadClient
-	// User is the client for interacting with the User builders.
-	User *UserClient
+	// ThreadCount is the client for interacting with the ThreadCount builders.
+	ThreadCount *ThreadCountClient
 	// UserAccount is the client for interacting with the UserAccount builders.
 	UserAccount *UserAccountClient
+	// UserCount is the client for interacting with the UserCount builders.
+	UserCount *UserCountClient
 	// UserProfile is the client for interacting with the UserProfile builders.
 	UserProfile *UserProfileClient
 }
@@ -52,8 +55,9 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Media = NewMediaClient(c.config)
 	c.Thread = NewThreadClient(c.config)
-	c.User = NewUserClient(c.config)
+	c.ThreadCount = NewThreadCountClient(c.config)
 	c.UserAccount = NewUserAccountClient(c.config)
+	c.UserCount = NewUserCountClient(c.config)
 	c.UserProfile = NewUserProfileClient(c.config)
 }
 
@@ -142,8 +146,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:      cfg,
 		Media:       NewMediaClient(cfg),
 		Thread:      NewThreadClient(cfg),
-		User:        NewUserClient(cfg),
+		ThreadCount: NewThreadCountClient(cfg),
 		UserAccount: NewUserAccountClient(cfg),
+		UserCount:   NewUserCountClient(cfg),
 		UserProfile: NewUserProfileClient(cfg),
 	}, nil
 }
@@ -166,8 +171,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:      cfg,
 		Media:       NewMediaClient(cfg),
 		Thread:      NewThreadClient(cfg),
-		User:        NewUserClient(cfg),
+		ThreadCount: NewThreadCountClient(cfg),
 		UserAccount: NewUserAccountClient(cfg),
+		UserCount:   NewUserCountClient(cfg),
 		UserProfile: NewUserProfileClient(cfg),
 	}, nil
 }
@@ -197,21 +203,21 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Media.Use(hooks...)
-	c.Thread.Use(hooks...)
-	c.User.Use(hooks...)
-	c.UserAccount.Use(hooks...)
-	c.UserProfile.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Media, c.Thread, c.ThreadCount, c.UserAccount, c.UserCount, c.UserProfile,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Media.Intercept(interceptors...)
-	c.Thread.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
-	c.UserAccount.Intercept(interceptors...)
-	c.UserProfile.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Media, c.Thread, c.ThreadCount, c.UserAccount, c.UserCount, c.UserProfile,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -221,10 +227,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Media.mutate(ctx, m)
 	case *ThreadMutation:
 		return c.Thread.mutate(ctx, m)
-	case *UserMutation:
-		return c.User.mutate(ctx, m)
+	case *ThreadCountMutation:
+		return c.ThreadCount.mutate(ctx, m)
 	case *UserAccountMutation:
 		return c.UserAccount.mutate(ctx, m)
+	case *UserCountMutation:
+		return c.UserCount.mutate(ctx, m)
 	case *UserProfileMutation:
 		return c.UserProfile.mutate(ctx, m)
 	default:
@@ -594,107 +602,107 @@ func (c *ThreadClient) mutate(ctx context.Context, m *ThreadMutation) (Value, er
 	}
 }
 
-// UserClient is a client for the User schema.
-type UserClient struct {
+// ThreadCountClient is a client for the ThreadCount schema.
+type ThreadCountClient struct {
 	config
 }
 
-// NewUserClient returns a client for the User from the given config.
-func NewUserClient(c config) *UserClient {
-	return &UserClient{config: c}
+// NewThreadCountClient returns a client for the ThreadCount from the given config.
+func NewThreadCountClient(c config) *ThreadCountClient {
+	return &ThreadCountClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `user.Hooks(f(g(h())))`.
-func (c *UserClient) Use(hooks ...Hook) {
-	c.hooks.User = append(c.hooks.User, hooks...)
+// A call to `Use(f, g, h)` equals to `threadcount.Hooks(f(g(h())))`.
+func (c *ThreadCountClient) Use(hooks ...Hook) {
+	c.hooks.ThreadCount = append(c.hooks.ThreadCount, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `user.Intercept(f(g(h())))`.
-func (c *UserClient) Intercept(interceptors ...Interceptor) {
-	c.inters.User = append(c.inters.User, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `threadcount.Intercept(f(g(h())))`.
+func (c *ThreadCountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ThreadCount = append(c.inters.ThreadCount, interceptors...)
 }
 
-// Create returns a builder for creating a User entity.
-func (c *UserClient) Create() *UserCreate {
-	mutation := newUserMutation(c.config, OpCreate)
-	return &UserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a ThreadCount entity.
+func (c *ThreadCountClient) Create() *ThreadCountCreate {
+	mutation := newThreadCountMutation(c.config, OpCreate)
+	return &ThreadCountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of User entities.
-func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
-	return &UserCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of ThreadCount entities.
+func (c *ThreadCountClient) CreateBulk(builders ...*ThreadCountCreate) *ThreadCountCreateBulk {
+	return &ThreadCountCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *UserClient) MapCreateBulk(slice any, setFunc func(*UserCreate, int)) *UserCreateBulk {
+func (c *ThreadCountClient) MapCreateBulk(slice any, setFunc func(*ThreadCountCreate, int)) *ThreadCountCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &UserCreateBulk{err: fmt.Errorf("calling to UserClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &ThreadCountCreateBulk{err: fmt.Errorf("calling to ThreadCountClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*UserCreate, rv.Len())
+	builders := make([]*ThreadCountCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &UserCreateBulk{config: c.config, builders: builders}
+	return &ThreadCountCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for User.
-func (c *UserClient) Update() *UserUpdate {
-	mutation := newUserMutation(c.config, OpUpdate)
-	return &UserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for ThreadCount.
+func (c *ThreadCountClient) Update() *ThreadCountUpdate {
+	mutation := newThreadCountMutation(c.config, OpUpdate)
+	return &ThreadCountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
-	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
-	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ThreadCountClient) UpdateOne(tc *ThreadCount) *ThreadCountUpdateOne {
+	mutation := newThreadCountMutation(c.config, OpUpdateOne, withThreadCount(tc))
+	return &ThreadCountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
-	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
-	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ThreadCountClient) UpdateOneID(id int) *ThreadCountUpdateOne {
+	mutation := newThreadCountMutation(c.config, OpUpdateOne, withThreadCountID(id))
+	return &ThreadCountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for User.
-func (c *UserClient) Delete() *UserDelete {
-	mutation := newUserMutation(c.config, OpDelete)
-	return &UserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for ThreadCount.
+func (c *ThreadCountClient) Delete() *ThreadCountDelete {
+	mutation := newThreadCountMutation(c.config, OpDelete)
+	return &ThreadCountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
-	return c.DeleteOneID(u.ID)
+func (c *ThreadCountClient) DeleteOne(tc *ThreadCount) *ThreadCountDeleteOne {
+	return c.DeleteOneID(tc.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
-	builder := c.Delete().Where(user.ID(id))
+func (c *ThreadCountClient) DeleteOneID(id int) *ThreadCountDeleteOne {
+	builder := c.Delete().Where(threadcount.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &UserDeleteOne{builder}
+	return &ThreadCountDeleteOne{builder}
 }
 
-// Query returns a query builder for User.
-func (c *UserClient) Query() *UserQuery {
-	return &UserQuery{
+// Query returns a query builder for ThreadCount.
+func (c *ThreadCountClient) Query() *ThreadCountQuery {
+	return &ThreadCountQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeUser},
+		ctx:    &QueryContext{Type: TypeThreadCount},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
-	return c.Query().Where(user.ID(id)).Only(ctx)
+// Get returns a ThreadCount entity by its id.
+func (c *ThreadCountClient) Get(ctx context.Context, id int) (*ThreadCount, error) {
+	return c.Query().Where(threadcount.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int) *User {
+func (c *ThreadCountClient) GetX(ctx context.Context, id int) *ThreadCount {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -703,27 +711,27 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 }
 
 // Hooks returns the client hooks.
-func (c *UserClient) Hooks() []Hook {
-	return c.hooks.User
+func (c *ThreadCountClient) Hooks() []Hook {
+	return c.hooks.ThreadCount
 }
 
 // Interceptors returns the client interceptors.
-func (c *UserClient) Interceptors() []Interceptor {
-	return c.inters.User
+func (c *ThreadCountClient) Interceptors() []Interceptor {
+	return c.inters.ThreadCount
 }
 
-func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error) {
+func (c *ThreadCountClient) mutate(ctx context.Context, m *ThreadCountMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&UserCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ThreadCountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&UserUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ThreadCountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ThreadCountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&UserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ThreadCountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown User mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown ThreadCount mutation op: %q", m.Op())
 	}
 }
 
@@ -851,6 +859,86 @@ func (c *UserAccountClient) QueryProfile(ua *UserAccount) *UserProfileQuery {
 	return query
 }
 
+// QueryFollowers queries the followers edge of a UserAccount.
+func (c *UserAccountClient) QueryFollowers(ua *UserAccount) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ua.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, useraccount.FollowersTable, useraccount.FollowersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFollowing queries the following edge of a UserAccount.
+func (c *UserAccountClient) QueryFollowing(ua *UserAccount) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ua.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, useraccount.FollowingTable, useraccount.FollowingPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlockedBy queries the blocked_by edge of a UserAccount.
+func (c *UserAccountClient) QueryBlockedBy(ua *UserAccount) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ua.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, useraccount.BlockedByTable, useraccount.BlockedByPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlockedUser queries the blocked_user edge of a UserAccount.
+func (c *UserAccountClient) QueryBlockedUser(ua *UserAccount) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ua.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, useraccount.BlockedUserTable, useraccount.BlockedUserPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUserCountInfo queries the user_count_info edge of a UserAccount.
+func (c *UserAccountClient) QueryUserCountInfo(ua *UserAccount) *UserCountQuery {
+	query := (&UserCountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ua.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
+			sqlgraph.To(usercount.Table, usercount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, useraccount.UserCountInfoTable, useraccount.UserCountInfoColumn),
+		)
+		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserAccountClient) Hooks() []Hook {
 	return c.hooks.UserAccount
@@ -873,6 +961,155 @@ func (c *UserAccountClient) mutate(ctx context.Context, m *UserAccountMutation) 
 		return (&UserAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown UserAccount mutation op: %q", m.Op())
+	}
+}
+
+// UserCountClient is a client for the UserCount schema.
+type UserCountClient struct {
+	config
+}
+
+// NewUserCountClient returns a client for the UserCount from the given config.
+func NewUserCountClient(c config) *UserCountClient {
+	return &UserCountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `usercount.Hooks(f(g(h())))`.
+func (c *UserCountClient) Use(hooks ...Hook) {
+	c.hooks.UserCount = append(c.hooks.UserCount, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `usercount.Intercept(f(g(h())))`.
+func (c *UserCountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserCount = append(c.inters.UserCount, interceptors...)
+}
+
+// Create returns a builder for creating a UserCount entity.
+func (c *UserCountClient) Create() *UserCountCreate {
+	mutation := newUserCountMutation(c.config, OpCreate)
+	return &UserCountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserCount entities.
+func (c *UserCountClient) CreateBulk(builders ...*UserCountCreate) *UserCountCreateBulk {
+	return &UserCountCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserCountClient) MapCreateBulk(slice any, setFunc func(*UserCountCreate, int)) *UserCountCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserCountCreateBulk{err: fmt.Errorf("calling to UserCountClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserCountCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserCountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserCount.
+func (c *UserCountClient) Update() *UserCountUpdate {
+	mutation := newUserCountMutation(c.config, OpUpdate)
+	return &UserCountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserCountClient) UpdateOne(uc *UserCount) *UserCountUpdateOne {
+	mutation := newUserCountMutation(c.config, OpUpdateOne, withUserCount(uc))
+	return &UserCountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserCountClient) UpdateOneID(id int) *UserCountUpdateOne {
+	mutation := newUserCountMutation(c.config, OpUpdateOne, withUserCountID(id))
+	return &UserCountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserCount.
+func (c *UserCountClient) Delete() *UserCountDelete {
+	mutation := newUserCountMutation(c.config, OpDelete)
+	return &UserCountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserCountClient) DeleteOne(uc *UserCount) *UserCountDeleteOne {
+	return c.DeleteOneID(uc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserCountClient) DeleteOneID(id int) *UserCountDeleteOne {
+	builder := c.Delete().Where(usercount.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserCountDeleteOne{builder}
+}
+
+// Query returns a query builder for UserCount.
+func (c *UserCountClient) Query() *UserCountQuery {
+	return &UserCountQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserCount},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserCount entity by its id.
+func (c *UserCountClient) Get(ctx context.Context, id int) (*UserCount, error) {
+	return c.Query().Where(usercount.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserCountClient) GetX(ctx context.Context, id int) *UserCount {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a UserCount.
+func (c *UserCountClient) QueryUser(uc *UserCount) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := uc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usercount.Table, usercount.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, usercount.UserTable, usercount.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(uc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserCountClient) Hooks() []Hook {
+	return c.hooks.UserCount
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserCountClient) Interceptors() []Interceptor {
+	return c.inters.UserCount
+}
+
+func (c *UserCountClient) mutate(ctx context.Context, m *UserCountMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserCountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserCountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserCountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserCountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserCount mutation op: %q", m.Op())
 	}
 }
 
@@ -1060,9 +1297,10 @@ func (c *UserProfileClient) mutate(ctx context.Context, m *UserProfileMutation) 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Media, Thread, User, UserAccount, UserProfile []ent.Hook
+		Media, Thread, ThreadCount, UserAccount, UserCount, UserProfile []ent.Hook
 	}
 	inters struct {
-		Media, Thread, User, UserAccount, UserProfile []ent.Interceptor
+		Media, Thread, ThreadCount, UserAccount, UserCount,
+		UserProfile []ent.Interceptor
 	}
 )

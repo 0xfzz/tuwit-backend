@@ -13,17 +13,24 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/0xfzz/tuwitt/ent/predicate"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
 // UserAccountQuery is the builder for querying UserAccount entities.
 type UserAccountQuery struct {
 	config
-	ctx         *QueryContext
-	order       []useraccount.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.UserAccount
-	withProfile *UserProfileQuery
+	ctx               *QueryContext
+	order             []useraccount.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.UserAccount
+	withProfile       *UserProfileQuery
+	withFollowers     *UserAccountQuery
+	withFollowing     *UserAccountQuery
+	withBlockedBy     *UserAccountQuery
+	withBlockedUser   *UserAccountQuery
+	withUserCountInfo *UserCountQuery
+	withFKs           bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +82,116 @@ func (uaq *UserAccountQuery) QueryProfile() *UserProfileQuery {
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
 			sqlgraph.To(userprofile.Table, userprofile.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, useraccount.ProfileTable, useraccount.ProfileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFollowers chains the current query on the "followers" edge.
+func (uaq *UserAccountQuery) QueryFollowers() *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, useraccount.FollowersTable, useraccount.FollowersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFollowing chains the current query on the "following" edge.
+func (uaq *UserAccountQuery) QueryFollowing() *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, useraccount.FollowingTable, useraccount.FollowingPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBlockedBy chains the current query on the "blocked_by" edge.
+func (uaq *UserAccountQuery) QueryBlockedBy() *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, useraccount.BlockedByTable, useraccount.BlockedByPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBlockedUser chains the current query on the "blocked_user" edge.
+func (uaq *UserAccountQuery) QueryBlockedUser() *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, useraccount.BlockedUserTable, useraccount.BlockedUserPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUserCountInfo chains the current query on the "user_count_info" edge.
+func (uaq *UserAccountQuery) QueryUserCountInfo() *UserCountQuery {
+	query := (&UserCountClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(usercount.Table, usercount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, useraccount.UserCountInfoTable, useraccount.UserCountInfoColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +386,17 @@ func (uaq *UserAccountQuery) Clone() *UserAccountQuery {
 		return nil
 	}
 	return &UserAccountQuery{
-		config:      uaq.config,
-		ctx:         uaq.ctx.Clone(),
-		order:       append([]useraccount.OrderOption{}, uaq.order...),
-		inters:      append([]Interceptor{}, uaq.inters...),
-		predicates:  append([]predicate.UserAccount{}, uaq.predicates...),
-		withProfile: uaq.withProfile.Clone(),
+		config:            uaq.config,
+		ctx:               uaq.ctx.Clone(),
+		order:             append([]useraccount.OrderOption{}, uaq.order...),
+		inters:            append([]Interceptor{}, uaq.inters...),
+		predicates:        append([]predicate.UserAccount{}, uaq.predicates...),
+		withProfile:       uaq.withProfile.Clone(),
+		withFollowers:     uaq.withFollowers.Clone(),
+		withFollowing:     uaq.withFollowing.Clone(),
+		withBlockedBy:     uaq.withBlockedBy.Clone(),
+		withBlockedUser:   uaq.withBlockedUser.Clone(),
+		withUserCountInfo: uaq.withUserCountInfo.Clone(),
 		// clone intermediate query.
 		sql:  uaq.sql.Clone(),
 		path: uaq.path,
@@ -289,6 +411,61 @@ func (uaq *UserAccountQuery) WithProfile(opts ...func(*UserProfileQuery)) *UserA
 		opt(query)
 	}
 	uaq.withProfile = query
+	return uaq
+}
+
+// WithFollowers tells the query-builder to eager-load the nodes that are connected to
+// the "followers" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithFollowers(opts ...func(*UserAccountQuery)) *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withFollowers = query
+	return uaq
+}
+
+// WithFollowing tells the query-builder to eager-load the nodes that are connected to
+// the "following" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithFollowing(opts ...func(*UserAccountQuery)) *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withFollowing = query
+	return uaq
+}
+
+// WithBlockedBy tells the query-builder to eager-load the nodes that are connected to
+// the "blocked_by" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithBlockedBy(opts ...func(*UserAccountQuery)) *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withBlockedBy = query
+	return uaq
+}
+
+// WithBlockedUser tells the query-builder to eager-load the nodes that are connected to
+// the "blocked_user" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithBlockedUser(opts ...func(*UserAccountQuery)) *UserAccountQuery {
+	query := (&UserAccountClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withBlockedUser = query
+	return uaq
+}
+
+// WithUserCountInfo tells the query-builder to eager-load the nodes that are connected to
+// the "user_count_info" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithUserCountInfo(opts ...func(*UserCountQuery)) *UserAccountQuery {
+	query := (&UserCountClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withUserCountInfo = query
 	return uaq
 }
 
@@ -369,11 +546,23 @@ func (uaq *UserAccountQuery) prepareQuery(ctx context.Context) error {
 func (uaq *UserAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*UserAccount, error) {
 	var (
 		nodes       = []*UserAccount{}
+		withFKs     = uaq.withFKs
 		_spec       = uaq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [6]bool{
 			uaq.withProfile != nil,
+			uaq.withFollowers != nil,
+			uaq.withFollowing != nil,
+			uaq.withBlockedBy != nil,
+			uaq.withBlockedUser != nil,
+			uaq.withUserCountInfo != nil,
 		}
 	)
+	if uaq.withUserCountInfo != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, useraccount.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*UserAccount).scanValues(nil, columns)
 	}
@@ -395,6 +584,40 @@ func (uaq *UserAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := uaq.withProfile; query != nil {
 		if err := uaq.loadProfile(ctx, query, nodes, nil,
 			func(n *UserAccount, e *UserProfile) { n.Edges.Profile = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withFollowers; query != nil {
+		if err := uaq.loadFollowers(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.Followers = []*UserAccount{} },
+			func(n *UserAccount, e *UserAccount) { n.Edges.Followers = append(n.Edges.Followers, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withFollowing; query != nil {
+		if err := uaq.loadFollowing(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.Following = []*UserAccount{} },
+			func(n *UserAccount, e *UserAccount) { n.Edges.Following = append(n.Edges.Following, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withBlockedBy; query != nil {
+		if err := uaq.loadBlockedBy(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.BlockedBy = []*UserAccount{} },
+			func(n *UserAccount, e *UserAccount) { n.Edges.BlockedBy = append(n.Edges.BlockedBy, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withBlockedUser; query != nil {
+		if err := uaq.loadBlockedUser(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.BlockedUser = []*UserAccount{} },
+			func(n *UserAccount, e *UserAccount) { n.Edges.BlockedUser = append(n.Edges.BlockedUser, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withUserCountInfo; query != nil {
+		if err := uaq.loadUserCountInfo(ctx, query, nodes, nil,
+			func(n *UserAccount, e *UserCount) { n.Edges.UserCountInfo = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -426,6 +649,282 @@ func (uaq *UserAccountQuery) loadProfile(ctx context.Context, query *UserProfile
 			return fmt.Errorf(`unexpected referenced foreign-key "user_account_profile" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadFollowers(ctx context.Context, query *UserAccountQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *UserAccount)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*UserAccount)
+	nids := make(map[int]map[*UserAccount]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(useraccount.FollowersTable)
+		s.Join(joinT).On(s.C(useraccount.FieldID), joinT.C(useraccount.FollowersPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(useraccount.FollowersPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(useraccount.FollowersPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*UserAccount]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*UserAccount](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "followers" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadFollowing(ctx context.Context, query *UserAccountQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *UserAccount)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*UserAccount)
+	nids := make(map[int]map[*UserAccount]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(useraccount.FollowingTable)
+		s.Join(joinT).On(s.C(useraccount.FieldID), joinT.C(useraccount.FollowingPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(useraccount.FollowingPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(useraccount.FollowingPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*UserAccount]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*UserAccount](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "following" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadBlockedBy(ctx context.Context, query *UserAccountQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *UserAccount)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*UserAccount)
+	nids := make(map[int]map[*UserAccount]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(useraccount.BlockedByTable)
+		s.Join(joinT).On(s.C(useraccount.FieldID), joinT.C(useraccount.BlockedByPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(useraccount.BlockedByPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(useraccount.BlockedByPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*UserAccount]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*UserAccount](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "blocked_by" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadBlockedUser(ctx context.Context, query *UserAccountQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *UserAccount)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*UserAccount)
+	nids := make(map[int]map[*UserAccount]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(useraccount.BlockedUserTable)
+		s.Join(joinT).On(s.C(useraccount.FieldID), joinT.C(useraccount.BlockedUserPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(useraccount.BlockedUserPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(useraccount.BlockedUserPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*UserAccount]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*UserAccount](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "blocked_user" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadUserCountInfo(ctx context.Context, query *UserCountQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *UserCount)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*UserAccount)
+	for i := range nodes {
+		if nodes[i].user_account_user_count_info == nil {
+			continue
+		}
+		fk := *nodes[i].user_account_user_count_info
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(usercount.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_account_user_count_info" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

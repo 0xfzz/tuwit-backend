@@ -12,11 +12,14 @@ type Media func(*sql.Selector)
 // Thread is the predicate function for thread builders.
 type Thread func(*sql.Selector)
 
-// User is the predicate function for user builders.
-type User func(*sql.Selector)
+// ThreadCount is the predicate function for threadcount builders.
+type ThreadCount func(*sql.Selector)
 
 // UserAccount is the predicate function for useraccount builders.
 type UserAccount func(*sql.Selector)
+
+// UserCount is the predicate function for usercount builders.
+type UserCount func(*sql.Selector)
 
 // UserProfile is the predicate function for userprofile builders.
 type UserProfile func(*sql.Selector)

@@ -13,7 +13,9 @@ import (
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/predicate"
 	"github.com/0xfzz/tuwitt/ent/thread"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -28,8 +30,9 @@ const (
 	// Node types.
 	TypeMedia       = "Media"
 	TypeThread      = "Thread"
-	TypeUser        = "User"
+	TypeThreadCount = "ThreadCount"
 	TypeUserAccount = "UserAccount"
+	TypeUserCount   = "UserCount"
 	TypeUserProfile = "UserProfile"
 )
 
@@ -1449,29 +1452,33 @@ func (m *ThreadMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Thread edge %s", name)
 }
 
-// UserMutation represents an operation that mutates the User nodes in the graph.
-type UserMutation struct {
+// ThreadCountMutation represents an operation that mutates the ThreadCount nodes in the graph.
+type ThreadCountMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*User, error)
-	predicates    []predicate.User
+	op             Op
+	typ            string
+	id             *int
+	reply_count    *int
+	addreply_count *int
+	like_count     *int
+	addlike_count  *int
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*ThreadCount, error)
+	predicates     []predicate.ThreadCount
 }
 
-var _ ent.Mutation = (*UserMutation)(nil)
+var _ ent.Mutation = (*ThreadCountMutation)(nil)
 
-// userOption allows management of the mutation configuration using functional options.
-type userOption func(*UserMutation)
+// threadcountOption allows management of the mutation configuration using functional options.
+type threadcountOption func(*ThreadCountMutation)
 
-// newUserMutation creates new mutation for the User entity.
-func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
-	m := &UserMutation{
+// newThreadCountMutation creates new mutation for the ThreadCount entity.
+func newThreadCountMutation(c config, op Op, opts ...threadcountOption) *ThreadCountMutation {
+	m := &ThreadCountMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeUser,
+		typ:           TypeThreadCount,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -1480,20 +1487,20 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 	return m
 }
 
-// withUserID sets the ID field of the mutation.
-func withUserID(id int) userOption {
-	return func(m *UserMutation) {
+// withThreadCountID sets the ID field of the mutation.
+func withThreadCountID(id int) threadcountOption {
+	return func(m *ThreadCountMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *User
+			value *ThreadCount
 		)
-		m.oldValue = func(ctx context.Context) (*User, error) {
+		m.oldValue = func(ctx context.Context) (*ThreadCount, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().User.Get(ctx, id)
+					value, err = m.Client().ThreadCount.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -1502,10 +1509,10 @@ func withUserID(id int) userOption {
 	}
 }
 
-// withUser sets the old User of the mutation.
-func withUser(node *User) userOption {
-	return func(m *UserMutation) {
-		m.oldValue = func(context.Context) (*User, error) {
+// withThreadCount sets the old ThreadCount of the mutation.
+func withThreadCount(node *ThreadCount) threadcountOption {
+	return func(m *ThreadCountMutation) {
+		m.oldValue = func(context.Context) (*ThreadCount, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -1514,7 +1521,7 @@ func withUser(node *User) userOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m UserMutation) Client() *Client {
+func (m ThreadCountMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -1522,7 +1529,7 @@ func (m UserMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m UserMutation) Tx() (*Tx, error) {
+func (m ThreadCountMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -1533,7 +1540,7 @@ func (m UserMutation) Tx() (*Tx, error) {
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id int, exists bool) {
+func (m *ThreadCountMutation) ID() (id int, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1544,7 +1551,7 @@ func (m *UserMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *ThreadCountMutation) IDs(ctx context.Context) ([]int, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -1553,21 +1560,133 @@ func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().User.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().ThreadCount.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
-// Where appends a list predicates to the UserMutation builder.
-func (m *UserMutation) Where(ps ...predicate.User) {
+// SetReplyCount sets the "reply_count" field.
+func (m *ThreadCountMutation) SetReplyCount(i int) {
+	m.reply_count = &i
+	m.addreply_count = nil
+}
+
+// ReplyCount returns the value of the "reply_count" field in the mutation.
+func (m *ThreadCountMutation) ReplyCount() (r int, exists bool) {
+	v := m.reply_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReplyCount returns the old "reply_count" field's value of the ThreadCount entity.
+// If the ThreadCount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadCountMutation) OldReplyCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReplyCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReplyCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReplyCount: %w", err)
+	}
+	return oldValue.ReplyCount, nil
+}
+
+// AddReplyCount adds i to the "reply_count" field.
+func (m *ThreadCountMutation) AddReplyCount(i int) {
+	if m.addreply_count != nil {
+		*m.addreply_count += i
+	} else {
+		m.addreply_count = &i
+	}
+}
+
+// AddedReplyCount returns the value that was added to the "reply_count" field in this mutation.
+func (m *ThreadCountMutation) AddedReplyCount() (r int, exists bool) {
+	v := m.addreply_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetReplyCount resets all changes to the "reply_count" field.
+func (m *ThreadCountMutation) ResetReplyCount() {
+	m.reply_count = nil
+	m.addreply_count = nil
+}
+
+// SetLikeCount sets the "like_count" field.
+func (m *ThreadCountMutation) SetLikeCount(i int) {
+	m.like_count = &i
+	m.addlike_count = nil
+}
+
+// LikeCount returns the value of the "like_count" field in the mutation.
+func (m *ThreadCountMutation) LikeCount() (r int, exists bool) {
+	v := m.like_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLikeCount returns the old "like_count" field's value of the ThreadCount entity.
+// If the ThreadCount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadCountMutation) OldLikeCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLikeCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLikeCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLikeCount: %w", err)
+	}
+	return oldValue.LikeCount, nil
+}
+
+// AddLikeCount adds i to the "like_count" field.
+func (m *ThreadCountMutation) AddLikeCount(i int) {
+	if m.addlike_count != nil {
+		*m.addlike_count += i
+	} else {
+		m.addlike_count = &i
+	}
+}
+
+// AddedLikeCount returns the value that was added to the "like_count" field in this mutation.
+func (m *ThreadCountMutation) AddedLikeCount() (r int, exists bool) {
+	v := m.addlike_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetLikeCount resets all changes to the "like_count" field.
+func (m *ThreadCountMutation) ResetLikeCount() {
+	m.like_count = nil
+	m.addlike_count = nil
+}
+
+// Where appends a list predicates to the ThreadCountMutation builder.
+func (m *ThreadCountMutation) Where(ps ...predicate.ThreadCount) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the UserMutation builder. Using this method,
+// WhereP appends storage-level predicates to the ThreadCountMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *UserMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.User, len(ps))
+func (m *ThreadCountMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ThreadCount, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -1575,162 +1694,245 @@ func (m *UserMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *UserMutation) Op() Op {
+func (m *ThreadCountMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *UserMutation) SetOp(op Op) {
+func (m *ThreadCountMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (User).
-func (m *UserMutation) Type() string {
+// Type returns the node type of this mutation (ThreadCount).
+func (m *ThreadCountMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+func (m *ThreadCountMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.reply_count != nil {
+		fields = append(fields, threadcount.FieldReplyCount)
+	}
+	if m.like_count != nil {
+		fields = append(fields, threadcount.FieldLikeCount)
+	}
 	return fields
 }
 
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *UserMutation) Field(name string) (ent.Value, bool) {
+func (m *ThreadCountMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case threadcount.FieldReplyCount:
+		return m.ReplyCount()
+	case threadcount.FieldLikeCount:
+		return m.LikeCount()
+	}
 	return nil, false
 }
 
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	return nil, fmt.Errorf("unknown User field %s", name)
+func (m *ThreadCountMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case threadcount.FieldReplyCount:
+		return m.OldReplyCount(ctx)
+	case threadcount.FieldLikeCount:
+		return m.OldLikeCount(ctx)
+	}
+	return nil, fmt.Errorf("unknown ThreadCount field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *UserMutation) SetField(name string, value ent.Value) error {
+func (m *ThreadCountMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case threadcount.FieldReplyCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReplyCount(v)
+		return nil
+	case threadcount.FieldLikeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLikeCount(v)
+		return nil
 	}
-	return fmt.Errorf("unknown User field %s", name)
+	return fmt.Errorf("unknown ThreadCount field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *UserMutation) AddedFields() []string {
-	return nil
+func (m *ThreadCountMutation) AddedFields() []string {
+	var fields []string
+	if m.addreply_count != nil {
+		fields = append(fields, threadcount.FieldReplyCount)
+	}
+	if m.addlike_count != nil {
+		fields = append(fields, threadcount.FieldLikeCount)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+func (m *ThreadCountMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case threadcount.FieldReplyCount:
+		return m.AddedReplyCount()
+	case threadcount.FieldLikeCount:
+		return m.AddedLikeCount()
+	}
 	return nil, false
 }
 
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *UserMutation) AddField(name string, value ent.Value) error {
-	return fmt.Errorf("unknown User numeric field %s", name)
+func (m *ThreadCountMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case threadcount.FieldReplyCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReplyCount(v)
+		return nil
+	case threadcount.FieldLikeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLikeCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ThreadCount numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *UserMutation) ClearedFields() []string {
+func (m *ThreadCountMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *UserMutation) FieldCleared(name string) bool {
+func (m *ThreadCountMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *UserMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown User nullable field %s", name)
+func (m *ThreadCountMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ThreadCount nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *UserMutation) ResetField(name string) error {
-	return fmt.Errorf("unknown User field %s", name)
+func (m *ThreadCountMutation) ResetField(name string) error {
+	switch name {
+	case threadcount.FieldReplyCount:
+		m.ResetReplyCount()
+		return nil
+	case threadcount.FieldLikeCount:
+		m.ResetLikeCount()
+		return nil
+	}
+	return fmt.Errorf("unknown ThreadCount field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *UserMutation) AddedEdges() []string {
+func (m *ThreadCountMutation) AddedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *UserMutation) AddedIDs(name string) []ent.Value {
+func (m *ThreadCountMutation) AddedIDs(name string) []ent.Value {
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *UserMutation) RemovedEdges() []string {
+func (m *ThreadCountMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *UserMutation) RemovedIDs(name string) []ent.Value {
+func (m *ThreadCountMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *UserMutation) ClearedEdges() []string {
+func (m *ThreadCountMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *UserMutation) EdgeCleared(name string) bool {
+func (m *ThreadCountMutation) EdgeCleared(name string) bool {
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *UserMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown User unique edge %s", name)
+func (m *ThreadCountMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ThreadCount unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *UserMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown User edge %s", name)
+func (m *ThreadCountMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ThreadCount edge %s", name)
 }
 
 // UserAccountMutation represents an operation that mutates the UserAccount nodes in the graph.
 type UserAccountMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int
-	email             *string
-	username          *string
-	password          *string
-	is_verified       *bool
-	is_private        *bool
-	is_email_verified *bool
-	clearedFields     map[string]struct{}
-	profile           *int
-	clearedprofile    bool
-	done              bool
-	oldValue          func(context.Context) (*UserAccount, error)
-	predicates        []predicate.UserAccount
+	op                     Op
+	typ                    string
+	id                     *int
+	email                  *string
+	username               *string
+	password               *string
+	is_verified            *bool
+	is_private             *bool
+	is_email_verified      *bool
+	clearedFields          map[string]struct{}
+	profile                *int
+	clearedprofile         bool
+	followers              map[int]struct{}
+	removedfollowers       map[int]struct{}
+	clearedfollowers       bool
+	following              map[int]struct{}
+	removedfollowing       map[int]struct{}
+	clearedfollowing       bool
+	blocked_by             map[int]struct{}
+	removedblocked_by      map[int]struct{}
+	clearedblocked_by      bool
+	blocked_user           map[int]struct{}
+	removedblocked_user    map[int]struct{}
+	clearedblocked_user    bool
+	user_count_info        *int
+	cleareduser_count_info bool
+	done                   bool
+	oldValue               func(context.Context) (*UserAccount, error)
+	predicates             []predicate.UserAccount
 }
 
 var _ ent.Mutation = (*UserAccountMutation)(nil)
@@ -2086,6 +2288,261 @@ func (m *UserAccountMutation) ResetProfile() {
 	m.clearedprofile = false
 }
 
+// AddFollowerIDs adds the "followers" edge to the UserAccount entity by ids.
+func (m *UserAccountMutation) AddFollowerIDs(ids ...int) {
+	if m.followers == nil {
+		m.followers = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.followers[ids[i]] = struct{}{}
+	}
+}
+
+// ClearFollowers clears the "followers" edge to the UserAccount entity.
+func (m *UserAccountMutation) ClearFollowers() {
+	m.clearedfollowers = true
+}
+
+// FollowersCleared reports if the "followers" edge to the UserAccount entity was cleared.
+func (m *UserAccountMutation) FollowersCleared() bool {
+	return m.clearedfollowers
+}
+
+// RemoveFollowerIDs removes the "followers" edge to the UserAccount entity by IDs.
+func (m *UserAccountMutation) RemoveFollowerIDs(ids ...int) {
+	if m.removedfollowers == nil {
+		m.removedfollowers = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.followers, ids[i])
+		m.removedfollowers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFollowers returns the removed IDs of the "followers" edge to the UserAccount entity.
+func (m *UserAccountMutation) RemovedFollowersIDs() (ids []int) {
+	for id := range m.removedfollowers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// FollowersIDs returns the "followers" edge IDs in the mutation.
+func (m *UserAccountMutation) FollowersIDs() (ids []int) {
+	for id := range m.followers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetFollowers resets all changes to the "followers" edge.
+func (m *UserAccountMutation) ResetFollowers() {
+	m.followers = nil
+	m.clearedfollowers = false
+	m.removedfollowers = nil
+}
+
+// AddFollowingIDs adds the "following" edge to the UserAccount entity by ids.
+func (m *UserAccountMutation) AddFollowingIDs(ids ...int) {
+	if m.following == nil {
+		m.following = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.following[ids[i]] = struct{}{}
+	}
+}
+
+// ClearFollowing clears the "following" edge to the UserAccount entity.
+func (m *UserAccountMutation) ClearFollowing() {
+	m.clearedfollowing = true
+}
+
+// FollowingCleared reports if the "following" edge to the UserAccount entity was cleared.
+func (m *UserAccountMutation) FollowingCleared() bool {
+	return m.clearedfollowing
+}
+
+// RemoveFollowingIDs removes the "following" edge to the UserAccount entity by IDs.
+func (m *UserAccountMutation) RemoveFollowingIDs(ids ...int) {
+	if m.removedfollowing == nil {
+		m.removedfollowing = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.following, ids[i])
+		m.removedfollowing[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFollowing returns the removed IDs of the "following" edge to the UserAccount entity.
+func (m *UserAccountMutation) RemovedFollowingIDs() (ids []int) {
+	for id := range m.removedfollowing {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// FollowingIDs returns the "following" edge IDs in the mutation.
+func (m *UserAccountMutation) FollowingIDs() (ids []int) {
+	for id := range m.following {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetFollowing resets all changes to the "following" edge.
+func (m *UserAccountMutation) ResetFollowing() {
+	m.following = nil
+	m.clearedfollowing = false
+	m.removedfollowing = nil
+}
+
+// AddBlockedByIDs adds the "blocked_by" edge to the UserAccount entity by ids.
+func (m *UserAccountMutation) AddBlockedByIDs(ids ...int) {
+	if m.blocked_by == nil {
+		m.blocked_by = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.blocked_by[ids[i]] = struct{}{}
+	}
+}
+
+// ClearBlockedBy clears the "blocked_by" edge to the UserAccount entity.
+func (m *UserAccountMutation) ClearBlockedBy() {
+	m.clearedblocked_by = true
+}
+
+// BlockedByCleared reports if the "blocked_by" edge to the UserAccount entity was cleared.
+func (m *UserAccountMutation) BlockedByCleared() bool {
+	return m.clearedblocked_by
+}
+
+// RemoveBlockedByIDs removes the "blocked_by" edge to the UserAccount entity by IDs.
+func (m *UserAccountMutation) RemoveBlockedByIDs(ids ...int) {
+	if m.removedblocked_by == nil {
+		m.removedblocked_by = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.blocked_by, ids[i])
+		m.removedblocked_by[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedBlockedBy returns the removed IDs of the "blocked_by" edge to the UserAccount entity.
+func (m *UserAccountMutation) RemovedBlockedByIDs() (ids []int) {
+	for id := range m.removedblocked_by {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// BlockedByIDs returns the "blocked_by" edge IDs in the mutation.
+func (m *UserAccountMutation) BlockedByIDs() (ids []int) {
+	for id := range m.blocked_by {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetBlockedBy resets all changes to the "blocked_by" edge.
+func (m *UserAccountMutation) ResetBlockedBy() {
+	m.blocked_by = nil
+	m.clearedblocked_by = false
+	m.removedblocked_by = nil
+}
+
+// AddBlockedUserIDs adds the "blocked_user" edge to the UserAccount entity by ids.
+func (m *UserAccountMutation) AddBlockedUserIDs(ids ...int) {
+	if m.blocked_user == nil {
+		m.blocked_user = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.blocked_user[ids[i]] = struct{}{}
+	}
+}
+
+// ClearBlockedUser clears the "blocked_user" edge to the UserAccount entity.
+func (m *UserAccountMutation) ClearBlockedUser() {
+	m.clearedblocked_user = true
+}
+
+// BlockedUserCleared reports if the "blocked_user" edge to the UserAccount entity was cleared.
+func (m *UserAccountMutation) BlockedUserCleared() bool {
+	return m.clearedblocked_user
+}
+
+// RemoveBlockedUserIDs removes the "blocked_user" edge to the UserAccount entity by IDs.
+func (m *UserAccountMutation) RemoveBlockedUserIDs(ids ...int) {
+	if m.removedblocked_user == nil {
+		m.removedblocked_user = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.blocked_user, ids[i])
+		m.removedblocked_user[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedBlockedUser returns the removed IDs of the "blocked_user" edge to the UserAccount entity.
+func (m *UserAccountMutation) RemovedBlockedUserIDs() (ids []int) {
+	for id := range m.removedblocked_user {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// BlockedUserIDs returns the "blocked_user" edge IDs in the mutation.
+func (m *UserAccountMutation) BlockedUserIDs() (ids []int) {
+	for id := range m.blocked_user {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetBlockedUser resets all changes to the "blocked_user" edge.
+func (m *UserAccountMutation) ResetBlockedUser() {
+	m.blocked_user = nil
+	m.clearedblocked_user = false
+	m.removedblocked_user = nil
+}
+
+// SetUserCountInfoID sets the "user_count_info" edge to the UserCount entity by id.
+func (m *UserAccountMutation) SetUserCountInfoID(id int) {
+	m.user_count_info = &id
+}
+
+// ClearUserCountInfo clears the "user_count_info" edge to the UserCount entity.
+func (m *UserAccountMutation) ClearUserCountInfo() {
+	m.cleareduser_count_info = true
+}
+
+// UserCountInfoCleared reports if the "user_count_info" edge to the UserCount entity was cleared.
+func (m *UserAccountMutation) UserCountInfoCleared() bool {
+	return m.cleareduser_count_info
+}
+
+// UserCountInfoID returns the "user_count_info" edge ID in the mutation.
+func (m *UserAccountMutation) UserCountInfoID() (id int, exists bool) {
+	if m.user_count_info != nil {
+		return *m.user_count_info, true
+	}
+	return
+}
+
+// UserCountInfoIDs returns the "user_count_info" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserCountInfoID instead. It exists only for internal usage by the builders.
+func (m *UserAccountMutation) UserCountInfoIDs() (ids []int) {
+	if id := m.user_count_info; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUserCountInfo resets all changes to the "user_count_info" edge.
+func (m *UserAccountMutation) ResetUserCountInfo() {
+	m.user_count_info = nil
+	m.cleareduser_count_info = false
+}
+
 // Where appends a list predicates to the UserAccountMutation builder.
 func (m *UserAccountMutation) Where(ps ...predicate.UserAccount) {
 	m.predicates = append(m.predicates, ps...)
@@ -2304,9 +2761,24 @@ func (m *UserAccountMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserAccountMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 6)
 	if m.profile != nil {
 		edges = append(edges, useraccount.EdgeProfile)
+	}
+	if m.followers != nil {
+		edges = append(edges, useraccount.EdgeFollowers)
+	}
+	if m.following != nil {
+		edges = append(edges, useraccount.EdgeFollowing)
+	}
+	if m.blocked_by != nil {
+		edges = append(edges, useraccount.EdgeBlockedBy)
+	}
+	if m.blocked_user != nil {
+		edges = append(edges, useraccount.EdgeBlockedUser)
+	}
+	if m.user_count_info != nil {
+		edges = append(edges, useraccount.EdgeUserCountInfo)
 	}
 	return edges
 }
@@ -2319,27 +2791,108 @@ func (m *UserAccountMutation) AddedIDs(name string) []ent.Value {
 		if id := m.profile; id != nil {
 			return []ent.Value{*id}
 		}
+	case useraccount.EdgeFollowers:
+		ids := make([]ent.Value, 0, len(m.followers))
+		for id := range m.followers {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeFollowing:
+		ids := make([]ent.Value, 0, len(m.following))
+		for id := range m.following {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeBlockedBy:
+		ids := make([]ent.Value, 0, len(m.blocked_by))
+		for id := range m.blocked_by {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeBlockedUser:
+		ids := make([]ent.Value, 0, len(m.blocked_user))
+		for id := range m.blocked_user {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeUserCountInfo:
+		if id := m.user_count_info; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserAccountMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 6)
+	if m.removedfollowers != nil {
+		edges = append(edges, useraccount.EdgeFollowers)
+	}
+	if m.removedfollowing != nil {
+		edges = append(edges, useraccount.EdgeFollowing)
+	}
+	if m.removedblocked_by != nil {
+		edges = append(edges, useraccount.EdgeBlockedBy)
+	}
+	if m.removedblocked_user != nil {
+		edges = append(edges, useraccount.EdgeBlockedUser)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *UserAccountMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case useraccount.EdgeFollowers:
+		ids := make([]ent.Value, 0, len(m.removedfollowers))
+		for id := range m.removedfollowers {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeFollowing:
+		ids := make([]ent.Value, 0, len(m.removedfollowing))
+		for id := range m.removedfollowing {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeBlockedBy:
+		ids := make([]ent.Value, 0, len(m.removedblocked_by))
+		for id := range m.removedblocked_by {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeBlockedUser:
+		ids := make([]ent.Value, 0, len(m.removedblocked_user))
+		for id := range m.removedblocked_user {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserAccountMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 6)
 	if m.clearedprofile {
 		edges = append(edges, useraccount.EdgeProfile)
+	}
+	if m.clearedfollowers {
+		edges = append(edges, useraccount.EdgeFollowers)
+	}
+	if m.clearedfollowing {
+		edges = append(edges, useraccount.EdgeFollowing)
+	}
+	if m.clearedblocked_by {
+		edges = append(edges, useraccount.EdgeBlockedBy)
+	}
+	if m.clearedblocked_user {
+		edges = append(edges, useraccount.EdgeBlockedUser)
+	}
+	if m.cleareduser_count_info {
+		edges = append(edges, useraccount.EdgeUserCountInfo)
 	}
 	return edges
 }
@@ -2350,6 +2903,16 @@ func (m *UserAccountMutation) EdgeCleared(name string) bool {
 	switch name {
 	case useraccount.EdgeProfile:
 		return m.clearedprofile
+	case useraccount.EdgeFollowers:
+		return m.clearedfollowers
+	case useraccount.EdgeFollowing:
+		return m.clearedfollowing
+	case useraccount.EdgeBlockedBy:
+		return m.clearedblocked_by
+	case useraccount.EdgeBlockedUser:
+		return m.clearedblocked_user
+	case useraccount.EdgeUserCountInfo:
+		return m.cleareduser_count_info
 	}
 	return false
 }
@@ -2360,6 +2923,9 @@ func (m *UserAccountMutation) ClearEdge(name string) error {
 	switch name {
 	case useraccount.EdgeProfile:
 		m.ClearProfile()
+		return nil
+	case useraccount.EdgeUserCountInfo:
+		m.ClearUserCountInfo()
 		return nil
 	}
 	return fmt.Errorf("unknown UserAccount unique edge %s", name)
@@ -2372,8 +2938,565 @@ func (m *UserAccountMutation) ResetEdge(name string) error {
 	case useraccount.EdgeProfile:
 		m.ResetProfile()
 		return nil
+	case useraccount.EdgeFollowers:
+		m.ResetFollowers()
+		return nil
+	case useraccount.EdgeFollowing:
+		m.ResetFollowing()
+		return nil
+	case useraccount.EdgeBlockedBy:
+		m.ResetBlockedBy()
+		return nil
+	case useraccount.EdgeBlockedUser:
+		m.ResetBlockedUser()
+		return nil
+	case useraccount.EdgeUserCountInfo:
+		m.ResetUserCountInfo()
+		return nil
 	}
 	return fmt.Errorf("unknown UserAccount edge %s", name)
+}
+
+// UserCountMutation represents an operation that mutates the UserCount nodes in the graph.
+type UserCountMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	follower_count      *int
+	addfollower_count   *int
+	followings_count    *int
+	addfollowings_count *int
+	clearedFields       map[string]struct{}
+	user                map[int]struct{}
+	removeduser         map[int]struct{}
+	cleareduser         bool
+	done                bool
+	oldValue            func(context.Context) (*UserCount, error)
+	predicates          []predicate.UserCount
+}
+
+var _ ent.Mutation = (*UserCountMutation)(nil)
+
+// usercountOption allows management of the mutation configuration using functional options.
+type usercountOption func(*UserCountMutation)
+
+// newUserCountMutation creates new mutation for the UserCount entity.
+func newUserCountMutation(c config, op Op, opts ...usercountOption) *UserCountMutation {
+	m := &UserCountMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUserCount,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserCountID sets the ID field of the mutation.
+func withUserCountID(id int) usercountOption {
+	return func(m *UserCountMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UserCount
+		)
+		m.oldValue = func(ctx context.Context) (*UserCount, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UserCount.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUserCount sets the old UserCount of the mutation.
+func withUserCount(node *UserCount) usercountOption {
+	return func(m *UserCountMutation) {
+		m.oldValue = func(context.Context) (*UserCount, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserCountMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserCountMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserCountMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserCountMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UserCount.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetFollowerCount sets the "follower_count" field.
+func (m *UserCountMutation) SetFollowerCount(i int) {
+	m.follower_count = &i
+	m.addfollower_count = nil
+}
+
+// FollowerCount returns the value of the "follower_count" field in the mutation.
+func (m *UserCountMutation) FollowerCount() (r int, exists bool) {
+	v := m.follower_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFollowerCount returns the old "follower_count" field's value of the UserCount entity.
+// If the UserCount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserCountMutation) OldFollowerCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFollowerCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFollowerCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFollowerCount: %w", err)
+	}
+	return oldValue.FollowerCount, nil
+}
+
+// AddFollowerCount adds i to the "follower_count" field.
+func (m *UserCountMutation) AddFollowerCount(i int) {
+	if m.addfollower_count != nil {
+		*m.addfollower_count += i
+	} else {
+		m.addfollower_count = &i
+	}
+}
+
+// AddedFollowerCount returns the value that was added to the "follower_count" field in this mutation.
+func (m *UserCountMutation) AddedFollowerCount() (r int, exists bool) {
+	v := m.addfollower_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFollowerCount resets all changes to the "follower_count" field.
+func (m *UserCountMutation) ResetFollowerCount() {
+	m.follower_count = nil
+	m.addfollower_count = nil
+}
+
+// SetFollowingsCount sets the "followings_count" field.
+func (m *UserCountMutation) SetFollowingsCount(i int) {
+	m.followings_count = &i
+	m.addfollowings_count = nil
+}
+
+// FollowingsCount returns the value of the "followings_count" field in the mutation.
+func (m *UserCountMutation) FollowingsCount() (r int, exists bool) {
+	v := m.followings_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFollowingsCount returns the old "followings_count" field's value of the UserCount entity.
+// If the UserCount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserCountMutation) OldFollowingsCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFollowingsCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFollowingsCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFollowingsCount: %w", err)
+	}
+	return oldValue.FollowingsCount, nil
+}
+
+// AddFollowingsCount adds i to the "followings_count" field.
+func (m *UserCountMutation) AddFollowingsCount(i int) {
+	if m.addfollowings_count != nil {
+		*m.addfollowings_count += i
+	} else {
+		m.addfollowings_count = &i
+	}
+}
+
+// AddedFollowingsCount returns the value that was added to the "followings_count" field in this mutation.
+func (m *UserCountMutation) AddedFollowingsCount() (r int, exists bool) {
+	v := m.addfollowings_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFollowingsCount resets all changes to the "followings_count" field.
+func (m *UserCountMutation) ResetFollowingsCount() {
+	m.followings_count = nil
+	m.addfollowings_count = nil
+}
+
+// AddUserIDs adds the "user" edge to the UserAccount entity by ids.
+func (m *UserCountMutation) AddUserIDs(ids ...int) {
+	if m.user == nil {
+		m.user = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.user[ids[i]] = struct{}{}
+	}
+}
+
+// ClearUser clears the "user" edge to the UserAccount entity.
+func (m *UserCountMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the UserAccount entity was cleared.
+func (m *UserCountMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// RemoveUserIDs removes the "user" edge to the UserAccount entity by IDs.
+func (m *UserCountMutation) RemoveUserIDs(ids ...int) {
+	if m.removeduser == nil {
+		m.removeduser = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.user, ids[i])
+		m.removeduser[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedUser returns the removed IDs of the "user" edge to the UserAccount entity.
+func (m *UserCountMutation) RemovedUserIDs() (ids []int) {
+	for id := range m.removeduser {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+func (m *UserCountMutation) UserIDs() (ids []int) {
+	for id := range m.user {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *UserCountMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+	m.removeduser = nil
+}
+
+// Where appends a list predicates to the UserCountMutation builder.
+func (m *UserCountMutation) Where(ps ...predicate.UserCount) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserCountMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserCountMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserCount, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserCountMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserCountMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UserCount).
+func (m *UserCountMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserCountMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.follower_count != nil {
+		fields = append(fields, usercount.FieldFollowerCount)
+	}
+	if m.followings_count != nil {
+		fields = append(fields, usercount.FieldFollowingsCount)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserCountMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case usercount.FieldFollowerCount:
+		return m.FollowerCount()
+	case usercount.FieldFollowingsCount:
+		return m.FollowingsCount()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserCountMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case usercount.FieldFollowerCount:
+		return m.OldFollowerCount(ctx)
+	case usercount.FieldFollowingsCount:
+		return m.OldFollowingsCount(ctx)
+	}
+	return nil, fmt.Errorf("unknown UserCount field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserCountMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case usercount.FieldFollowerCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFollowerCount(v)
+		return nil
+	case usercount.FieldFollowingsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFollowingsCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserCount field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserCountMutation) AddedFields() []string {
+	var fields []string
+	if m.addfollower_count != nil {
+		fields = append(fields, usercount.FieldFollowerCount)
+	}
+	if m.addfollowings_count != nil {
+		fields = append(fields, usercount.FieldFollowingsCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserCountMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case usercount.FieldFollowerCount:
+		return m.AddedFollowerCount()
+	case usercount.FieldFollowingsCount:
+		return m.AddedFollowingsCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserCountMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case usercount.FieldFollowerCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFollowerCount(v)
+		return nil
+	case usercount.FieldFollowingsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFollowingsCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserCount numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserCountMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserCountMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserCountMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown UserCount nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserCountMutation) ResetField(name string) error {
+	switch name {
+	case usercount.FieldFollowerCount:
+		m.ResetFollowerCount()
+		return nil
+	case usercount.FieldFollowingsCount:
+		m.ResetFollowingsCount()
+		return nil
+	}
+	return fmt.Errorf("unknown UserCount field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserCountMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.user != nil {
+		edges = append(edges, usercount.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserCountMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case usercount.EdgeUser:
+		ids := make([]ent.Value, 0, len(m.user))
+		for id := range m.user {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserCountMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removeduser != nil {
+		edges = append(edges, usercount.EdgeUser)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserCountMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case usercount.EdgeUser:
+		ids := make([]ent.Value, 0, len(m.removeduser))
+		for id := range m.removeduser {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserCountMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleareduser {
+		edges = append(edges, usercount.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserCountMutation) EdgeCleared(name string) bool {
+	switch name {
+	case usercount.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserCountMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown UserCount unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserCountMutation) ResetEdge(name string) error {
+	switch name {
+	case usercount.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserCount edge %s", name)
 }
 
 // UserProfileMutation represents an operation that mutates the UserProfile nodes in the graph.

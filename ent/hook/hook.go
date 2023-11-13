@@ -33,16 +33,16 @@ func (f ThreadFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ThreadMutation", m)
 }
 
-// The UserFunc type is an adapter to allow the use of ordinary
-// function as User mutator.
-type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
+// The ThreadCountFunc type is an adapter to allow the use of ordinary
+// function as ThreadCount mutator.
+type ThreadCountFunc func(context.Context, *ent.ThreadCountMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.UserMutation); ok {
+func (f ThreadCountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ThreadCountMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ThreadCountMutation", m)
 }
 
 // The UserAccountFunc type is an adapter to allow the use of ordinary
@@ -55,6 +55,18 @@ func (f UserAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserAccountMutation", m)
+}
+
+// The UserCountFunc type is an adapter to allow the use of ordinary
+// function as UserCount mutator.
+type UserCountFunc func(context.Context, *ent.UserCountMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserCountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserCountMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserCountMutation", m)
 }
 
 // The UserProfileFunc type is an adapter to allow the use of ordinary

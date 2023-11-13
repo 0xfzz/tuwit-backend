@@ -5,7 +5,9 @@ package ent
 import (
 	"github.com/0xfzz/tuwitt/ent/schema"
 	"github.com/0xfzz/tuwitt/ent/thread"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -22,6 +24,16 @@ func init() {
 	threadDescIsDeleted := threadFields[4].Descriptor()
 	// thread.DefaultIsDeleted holds the default value on creation for the is_deleted field.
 	thread.DefaultIsDeleted = threadDescIsDeleted.Default.(bool)
+	threadcountFields := schema.ThreadCount{}.Fields()
+	_ = threadcountFields
+	// threadcountDescReplyCount is the schema descriptor for reply_count field.
+	threadcountDescReplyCount := threadcountFields[0].Descriptor()
+	// threadcount.DefaultReplyCount holds the default value on creation for the reply_count field.
+	threadcount.DefaultReplyCount = threadcountDescReplyCount.Default.(int)
+	// threadcountDescLikeCount is the schema descriptor for like_count field.
+	threadcountDescLikeCount := threadcountFields[1].Descriptor()
+	// threadcount.DefaultLikeCount holds the default value on creation for the like_count field.
+	threadcount.DefaultLikeCount = threadcountDescLikeCount.Default.(int)
 	useraccountFields := schema.UserAccount{}.Fields()
 	_ = useraccountFields
 	// useraccountDescIsVerified is the schema descriptor for is_verified field.
@@ -36,4 +48,14 @@ func init() {
 	useraccountDescIsEmailVerified := useraccountFields[5].Descriptor()
 	// useraccount.DefaultIsEmailVerified holds the default value on creation for the is_email_verified field.
 	useraccount.DefaultIsEmailVerified = useraccountDescIsEmailVerified.Default.(bool)
+	usercountFields := schema.UserCount{}.Fields()
+	_ = usercountFields
+	// usercountDescFollowerCount is the schema descriptor for follower_count field.
+	usercountDescFollowerCount := usercountFields[0].Descriptor()
+	// usercount.DefaultFollowerCount holds the default value on creation for the follower_count field.
+	usercount.DefaultFollowerCount = usercountDescFollowerCount.Default.(int)
+	// usercountDescFollowingsCount is the schema descriptor for followings_count field.
+	usercountDescFollowingsCount := usercountFields[1].Descriptor()
+	// usercount.DefaultFollowingsCount holds the default value on creation for the followings_count field.
+	usercount.DefaultFollowingsCount = usercountDescFollowingsCount.Default.(int)
 }

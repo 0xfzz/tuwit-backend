@@ -35,5 +35,8 @@ func (UserAccount) Fields() []ent.Field {
 func (UserAccount) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("profile", UserProfile.Type).Unique(),
+		edge.To("following", UserAccount.Type).From("followers"),
+		edge.To("blocked_user", UserAccount.Type).From("blocked_by"),
+		edge.To("user_count_info", UserCount.Type).Unique(),
 	}
 }

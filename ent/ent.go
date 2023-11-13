@@ -14,8 +14,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/thread"
-	"github.com/0xfzz/tuwitt/ent/user"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwitt/ent/usercount"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -79,8 +80,9 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			media.Table:       media.ValidColumn,
 			thread.Table:      thread.ValidColumn,
-			user.Table:        user.ValidColumn,
+			threadcount.Table: threadcount.ValidColumn,
 			useraccount.Table: useraccount.ValidColumn,
+			usercount.Table:   usercount.ValidColumn,
 			userprofile.Table: userprofile.ValidColumn,
 		})
 	})
