@@ -3,19 +3,51 @@
 package ent
 
 import (
+	"time"
+
+	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
 	"github.com/0xfzz/tuwitt/ent/schema"
 	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
+	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	blockedusersrelationshipMixin := schema.BlockedUsersRelationship{}.Mixin()
+	blockedusersrelationshipMixinFields0 := blockedusersrelationshipMixin[0].Fields()
+	_ = blockedusersrelationshipMixinFields0
+	blockedusersrelationshipFields := schema.BlockedUsersRelationship{}.Fields()
+	_ = blockedusersrelationshipFields
+	// blockedusersrelationshipDescCreatedAt is the schema descriptor for created_at field.
+	blockedusersrelationshipDescCreatedAt := blockedusersrelationshipMixinFields0[0].Descriptor()
+	// blockedusersrelationship.DefaultCreatedAt holds the default value on creation for the created_at field.
+	blockedusersrelationship.DefaultCreatedAt = blockedusersrelationshipDescCreatedAt.Default.(func() time.Time)
+	// blockedusersrelationshipDescUpdatedAt is the schema descriptor for updated_at field.
+	blockedusersrelationshipDescUpdatedAt := blockedusersrelationshipMixinFields0[1].Descriptor()
+	// blockedusersrelationship.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	blockedusersrelationship.DefaultUpdatedAt = blockedusersrelationshipDescUpdatedAt.Default.(func() time.Time)
+	// blockedusersrelationship.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	blockedusersrelationship.UpdateDefaultUpdatedAt = blockedusersrelationshipDescUpdatedAt.UpdateDefault.(func() time.Time)
+	threadMixin := schema.Thread{}.Mixin()
+	threadMixinFields0 := threadMixin[0].Fields()
+	_ = threadMixinFields0
 	threadFields := schema.Thread{}.Fields()
 	_ = threadFields
+	// threadDescCreatedAt is the schema descriptor for created_at field.
+	threadDescCreatedAt := threadMixinFields0[0].Descriptor()
+	// thread.DefaultCreatedAt holds the default value on creation for the created_at field.
+	thread.DefaultCreatedAt = threadDescCreatedAt.Default.(func() time.Time)
+	// threadDescUpdatedAt is the schema descriptor for updated_at field.
+	threadDescUpdatedAt := threadMixinFields0[1].Descriptor()
+	// thread.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	thread.DefaultUpdatedAt = threadDescUpdatedAt.Default.(func() time.Time)
+	// thread.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	thread.UpdateDefaultUpdatedAt = threadDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// threadDescIsCommentDisabled is the schema descriptor for is_comment_disabled field.
 	threadDescIsCommentDisabled := threadFields[1].Descriptor()
 	// thread.DefaultIsCommentDisabled holds the default value on creation for the is_comment_disabled field.
@@ -58,4 +90,19 @@ func init() {
 	usercountDescFollowingsCount := usercountFields[1].Descriptor()
 	// usercount.DefaultFollowingsCount holds the default value on creation for the followings_count field.
 	usercount.DefaultFollowingsCount = usercountDescFollowingsCount.Default.(int)
+	userfollowerrelationshipMixin := schema.UserFollowerRelationship{}.Mixin()
+	userfollowerrelationshipMixinFields0 := userfollowerrelationshipMixin[0].Fields()
+	_ = userfollowerrelationshipMixinFields0
+	userfollowerrelationshipFields := schema.UserFollowerRelationship{}.Fields()
+	_ = userfollowerrelationshipFields
+	// userfollowerrelationshipDescCreatedAt is the schema descriptor for created_at field.
+	userfollowerrelationshipDescCreatedAt := userfollowerrelationshipMixinFields0[0].Descriptor()
+	// userfollowerrelationship.DefaultCreatedAt holds the default value on creation for the created_at field.
+	userfollowerrelationship.DefaultCreatedAt = userfollowerrelationshipDescCreatedAt.Default.(func() time.Time)
+	// userfollowerrelationshipDescUpdatedAt is the schema descriptor for updated_at field.
+	userfollowerrelationshipDescUpdatedAt := userfollowerrelationshipMixinFields0[1].Descriptor()
+	// userfollowerrelationship.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	userfollowerrelationship.DefaultUpdatedAt = userfollowerrelationshipDescUpdatedAt.Default.(func() time.Time)
+	// userfollowerrelationship.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	userfollowerrelationship.UpdateDefaultUpdatedAt = userfollowerrelationshipDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

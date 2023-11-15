@@ -6,11 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/thread"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
+	"github.com/0xfzz/tuwitt/ent/useraccount"
 )
 
 // ThreadCreate is the builder for creating a Thread entity.
@@ -18,6 +21,34 @@ type ThreadCreate struct {
 	config
 	mutation *ThreadMutation
 	hooks    []Hook
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (tc *ThreadCreate) SetCreatedAt(t time.Time) *ThreadCreate {
+	tc.mutation.SetCreatedAt(t)
+	return tc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableCreatedAt(t *time.Time) *ThreadCreate {
+	if t != nil {
+		tc.SetCreatedAt(*t)
+	}
+	return tc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (tc *ThreadCreate) SetUpdatedAt(t time.Time) *ThreadCreate {
+	tc.mutation.SetUpdatedAt(t)
+	return tc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableUpdatedAt(t *time.Time) *ThreadCreate {
+	if t != nil {
+		tc.SetUpdatedAt(*t)
+	}
+	return tc
 }
 
 // SetContent sets the "content" field.
@@ -46,9 +77,25 @@ func (tc *ThreadCreate) SetVisibility(t thread.Visibility) *ThreadCreate {
 	return tc
 }
 
+// SetNillableVisibility sets the "visibility" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableVisibility(t *thread.Visibility) *ThreadCreate {
+	if t != nil {
+		tc.SetVisibility(*t)
+	}
+	return tc
+}
+
 // SetStatus sets the "status" field.
 func (tc *ThreadCreate) SetStatus(t thread.Status) *ThreadCreate {
 	tc.mutation.SetStatus(t)
+	return tc
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableStatus(t *thread.Status) *ThreadCreate {
+	if t != nil {
+		tc.SetStatus(*t)
+	}
 	return tc
 }
 
@@ -66,38 +113,124 @@ func (tc *ThreadCreate) SetNillableIsDeleted(b *bool) *ThreadCreate {
 	return tc
 }
 
-// SetParentThreadID sets the "parent_thread" edge to the Thread entity by ID.
-func (tc *ThreadCreate) SetParentThreadID(id int) *ThreadCreate {
-	tc.mutation.SetParentThreadID(id)
+// SetAuthorID sets the "author_id" field.
+func (tc *ThreadCreate) SetAuthorID(i int) *ThreadCreate {
+	tc.mutation.SetAuthorID(i)
 	return tc
 }
 
-// SetNillableParentThreadID sets the "parent_thread" edge to the Thread entity by ID if the given value is not nil.
-func (tc *ThreadCreate) SetNillableParentThreadID(id *int) *ThreadCreate {
-	if id != nil {
-		tc = tc.SetParentThreadID(*id)
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableAuthorID(i *int) *ThreadCreate {
+	if i != nil {
+		tc.SetAuthorID(*i)
 	}
 	return tc
 }
 
-// SetParentThread sets the "parent_thread" edge to the Thread entity.
-func (tc *ThreadCreate) SetParentThread(t *Thread) *ThreadCreate {
-	return tc.SetParentThreadID(t.ID)
-}
-
-// AddChildThreadIDs adds the "child_threads" edge to the Thread entity by IDs.
-func (tc *ThreadCreate) AddChildThreadIDs(ids ...int) *ThreadCreate {
-	tc.mutation.AddChildThreadIDs(ids...)
+// SetParentID sets the "parent_id" field.
+func (tc *ThreadCreate) SetParentID(i int) *ThreadCreate {
+	tc.mutation.SetParentID(i)
 	return tc
 }
 
-// AddChildThreads adds the "child_threads" edges to the Thread entity.
-func (tc *ThreadCreate) AddChildThreads(t ...*Thread) *ThreadCreate {
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableParentID(i *int) *ThreadCreate {
+	if i != nil {
+		tc.SetParentID(*i)
+	}
+	return tc
+}
+
+// SetRepostThreadID sets the "repost_thread_id" field.
+func (tc *ThreadCreate) SetRepostThreadID(i int) *ThreadCreate {
+	tc.mutation.SetRepostThreadID(i)
+	return tc
+}
+
+// SetNillableRepostThreadID sets the "repost_thread_id" field if the given value is not nil.
+func (tc *ThreadCreate) SetNillableRepostThreadID(i *int) *ThreadCreate {
+	if i != nil {
+		tc.SetRepostThreadID(*i)
+	}
+	return tc
+}
+
+// SetAuthor sets the "author" edge to the UserAccount entity.
+func (tc *ThreadCreate) SetAuthor(u *UserAccount) *ThreadCreate {
+	return tc.SetAuthorID(u.ID)
+}
+
+// SetParent sets the "parent" edge to the Thread entity.
+func (tc *ThreadCreate) SetParent(t *Thread) *ThreadCreate {
+	return tc.SetParentID(t.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Thread entity by IDs.
+func (tc *ThreadCreate) AddChildIDs(ids ...int) *ThreadCreate {
+	tc.mutation.AddChildIDs(ids...)
+	return tc
+}
+
+// AddChildren adds the "children" edges to the Thread entity.
+func (tc *ThreadCreate) AddChildren(t ...*Thread) *ThreadCreate {
 	ids := make([]int, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return tc.AddChildThreadIDs(ids...)
+	return tc.AddChildIDs(ids...)
+}
+
+// AddThreadCountIDs adds the "thread_count" edge to the ThreadCount entity by IDs.
+func (tc *ThreadCreate) AddThreadCountIDs(ids ...int) *ThreadCreate {
+	tc.mutation.AddThreadCountIDs(ids...)
+	return tc
+}
+
+// AddThreadCount adds the "thread_count" edges to the ThreadCount entity.
+func (tc *ThreadCreate) AddThreadCount(t ...*ThreadCount) *ThreadCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tc.AddThreadCountIDs(ids...)
+}
+
+// SetRepostedID sets the "reposted" edge to the Thread entity by ID.
+func (tc *ThreadCreate) SetRepostedID(id int) *ThreadCreate {
+	tc.mutation.SetRepostedID(id)
+	return tc
+}
+
+// SetNillableRepostedID sets the "reposted" edge to the Thread entity by ID if the given value is not nil.
+func (tc *ThreadCreate) SetNillableRepostedID(id *int) *ThreadCreate {
+	if id != nil {
+		tc = tc.SetRepostedID(*id)
+	}
+	return tc
+}
+
+// SetReposted sets the "reposted" edge to the Thread entity.
+func (tc *ThreadCreate) SetReposted(t *Thread) *ThreadCreate {
+	return tc.SetRepostedID(t.ID)
+}
+
+// SetRepostID sets the "repost" edge to the Thread entity by ID.
+func (tc *ThreadCreate) SetRepostID(id int) *ThreadCreate {
+	tc.mutation.SetRepostID(id)
+	return tc
+}
+
+// SetNillableRepostID sets the "repost" edge to the Thread entity by ID if the given value is not nil.
+func (tc *ThreadCreate) SetNillableRepostID(id *int) *ThreadCreate {
+	if id != nil {
+		tc = tc.SetRepostID(*id)
+	}
+	return tc
+}
+
+// SetRepost sets the "repost" edge to the Thread entity.
+func (tc *ThreadCreate) SetRepost(t *Thread) *ThreadCreate {
+	return tc.SetRepostID(t.ID)
 }
 
 // AddImageIDs adds the "images" edge to the Media entity by IDs.
@@ -150,9 +283,25 @@ func (tc *ThreadCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (tc *ThreadCreate) defaults() {
+	if _, ok := tc.mutation.CreatedAt(); !ok {
+		v := thread.DefaultCreatedAt()
+		tc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := tc.mutation.UpdatedAt(); !ok {
+		v := thread.DefaultUpdatedAt()
+		tc.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := tc.mutation.IsCommentDisabled(); !ok {
 		v := thread.DefaultIsCommentDisabled
 		tc.mutation.SetIsCommentDisabled(v)
+	}
+	if _, ok := tc.mutation.Visibility(); !ok {
+		v := thread.DefaultVisibility
+		tc.mutation.SetVisibility(v)
+	}
+	if _, ok := tc.mutation.Status(); !ok {
+		v := thread.DefaultStatus
+		tc.mutation.SetStatus(v)
 	}
 	if _, ok := tc.mutation.IsDeleted(); !ok {
 		v := thread.DefaultIsDeleted
@@ -162,6 +311,12 @@ func (tc *ThreadCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *ThreadCreate) check() error {
+	if _, ok := tc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Thread.created_at"`)}
+	}
+	if _, ok := tc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Thread.updated_at"`)}
+	}
 	if _, ok := tc.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "Thread.content"`)}
 	}
@@ -213,6 +368,14 @@ func (tc *ThreadCreate) createSpec() (*Thread, *sqlgraph.CreateSpec) {
 		_node = &Thread{config: tc.config}
 		_spec = sqlgraph.NewCreateSpec(thread.Table, sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt))
 	)
+	if value, ok := tc.mutation.CreatedAt(); ok {
+		_spec.SetField(thread.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := tc.mutation.UpdatedAt(); ok {
+		_spec.SetField(thread.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	if value, ok := tc.mutation.Content(); ok {
 		_spec.SetField(thread.FieldContent, field.TypeString, value)
 		_node.Content = value
@@ -233,12 +396,29 @@ func (tc *ThreadCreate) createSpec() (*Thread, *sqlgraph.CreateSpec) {
 		_spec.SetField(thread.FieldIsDeleted, field.TypeBool, value)
 		_node.IsDeleted = value
 	}
-	if nodes := tc.mutation.ParentThreadIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.AuthorIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   thread.ParentThreadTable,
-			Columns: []string{thread.ParentThreadColumn},
+			Table:   thread.AuthorTable,
+			Columns: []string{thread.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.AuthorID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.ParentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   thread.ParentTable,
+			Columns: []string{thread.ParentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -247,15 +427,64 @@ func (tc *ThreadCreate) createSpec() (*Thread, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.thread_child_threads = &nodes[0]
+		_node.ParentID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := tc.mutation.ChildThreadsIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.ChildrenIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.ThreadCountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.RepostedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   thread.RepostedTable,
+			Columns: []string{thread.RepostedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.RepostThreadID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.RepostIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   thread.RepostTable,
+			Columns: []string{thread.RepostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),

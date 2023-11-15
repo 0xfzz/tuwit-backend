@@ -28,14 +28,16 @@ const (
 	EdgeProfile = "profile"
 	// EdgeFollowers holds the string denoting the followers edge name in mutations.
 	EdgeFollowers = "followers"
-	// EdgeFollowing holds the string denoting the following edge name in mutations.
-	EdgeFollowing = "following"
+	// EdgeFollowings holds the string denoting the followings edge name in mutations.
+	EdgeFollowings = "followings"
 	// EdgeBlockedBy holds the string denoting the blocked_by edge name in mutations.
 	EdgeBlockedBy = "blocked_by"
-	// EdgeBlockedUser holds the string denoting the blocked_user edge name in mutations.
-	EdgeBlockedUser = "blocked_user"
-	// EdgeUserCountInfo holds the string denoting the user_count_info edge name in mutations.
-	EdgeUserCountInfo = "user_count_info"
+	// EdgeBlockedUsers holds the string denoting the blocked_users edge name in mutations.
+	EdgeBlockedUsers = "blocked_users"
+	// EdgeUserCount holds the string denoting the user_count edge name in mutations.
+	EdgeUserCount = "user_count"
+	// EdgeThreads holds the string denoting the threads edge name in mutations.
+	EdgeThreads = "threads"
 	// Table holds the table name of the useraccount in the database.
 	Table = "user_account"
 	// ProfileTable is the table that holds the profile relation/edge.
@@ -45,21 +47,48 @@ const (
 	ProfileInverseTable = "user_profile"
 	// ProfileColumn is the table column denoting the profile relation/edge.
 	ProfileColumn = "user_account_profile"
-	// FollowersTable is the table that holds the followers relation/edge. The primary key declared below.
-	FollowersTable = "user_account_following"
-	// FollowingTable is the table that holds the following relation/edge. The primary key declared below.
-	FollowingTable = "user_account_following"
-	// BlockedByTable is the table that holds the blocked_by relation/edge. The primary key declared below.
-	BlockedByTable = "user_account_blocked_user"
-	// BlockedUserTable is the table that holds the blocked_user relation/edge. The primary key declared below.
-	BlockedUserTable = "user_account_blocked_user"
-	// UserCountInfoTable is the table that holds the user_count_info relation/edge.
-	UserCountInfoTable = "user_account"
-	// UserCountInfoInverseTable is the table name for the UserCount entity.
+	// FollowersTable is the table that holds the followers relation/edge.
+	FollowersTable = "user_follower_relationships"
+	// FollowersInverseTable is the table name for the UserFollowerRelationship entity.
+	// It exists in this package in order to avoid circular dependency with the "userfollowerrelationship" package.
+	FollowersInverseTable = "user_follower_relationships"
+	// FollowersColumn is the table column denoting the followers relation/edge.
+	FollowersColumn = "user_id"
+	// FollowingsTable is the table that holds the followings relation/edge.
+	FollowingsTable = "user_follower_relationships"
+	// FollowingsInverseTable is the table name for the UserFollowerRelationship entity.
+	// It exists in this package in order to avoid circular dependency with the "userfollowerrelationship" package.
+	FollowingsInverseTable = "user_follower_relationships"
+	// FollowingsColumn is the table column denoting the followings relation/edge.
+	FollowingsColumn = "follower_id"
+	// BlockedByTable is the table that holds the blocked_by relation/edge.
+	BlockedByTable = "blocked_users_relationships"
+	// BlockedByInverseTable is the table name for the BlockedUsersRelationship entity.
+	// It exists in this package in order to avoid circular dependency with the "blockedusersrelationship" package.
+	BlockedByInverseTable = "blocked_users_relationships"
+	// BlockedByColumn is the table column denoting the blocked_by relation/edge.
+	BlockedByColumn = "user_id"
+	// BlockedUsersTable is the table that holds the blocked_users relation/edge.
+	BlockedUsersTable = "blocked_users_relationships"
+	// BlockedUsersInverseTable is the table name for the BlockedUsersRelationship entity.
+	// It exists in this package in order to avoid circular dependency with the "blockedusersrelationship" package.
+	BlockedUsersInverseTable = "blocked_users_relationships"
+	// BlockedUsersColumn is the table column denoting the blocked_users relation/edge.
+	BlockedUsersColumn = "blocker_id"
+	// UserCountTable is the table that holds the user_count relation/edge.
+	UserCountTable = "user_count"
+	// UserCountInverseTable is the table name for the UserCount entity.
 	// It exists in this package in order to avoid circular dependency with the "usercount" package.
-	UserCountInfoInverseTable = "user_count"
-	// UserCountInfoColumn is the table column denoting the user_count_info relation/edge.
-	UserCountInfoColumn = "user_account_user_count_info"
+	UserCountInverseTable = "user_count"
+	// UserCountColumn is the table column denoting the user_count relation/edge.
+	UserCountColumn = "user_account_user_count"
+	// ThreadsTable is the table that holds the threads relation/edge.
+	ThreadsTable = "threads"
+	// ThreadsInverseTable is the table name for the Thread entity.
+	// It exists in this package in order to avoid circular dependency with the "thread" package.
+	ThreadsInverseTable = "threads"
+	// ThreadsColumn is the table column denoting the threads relation/edge.
+	ThreadsColumn = "author_id"
 )
 
 // Columns holds all SQL columns for useraccount fields.
@@ -73,36 +102,10 @@ var Columns = []string{
 	FieldIsEmailVerified,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "user_account"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"user_account_user_count_info",
-}
-
-var (
-	// FollowersPrimaryKey and FollowersColumn2 are the table columns denoting the
-	// primary key for the followers relation (M2M).
-	FollowersPrimaryKey = []string{"user_account_id", "follower_id"}
-	// FollowingPrimaryKey and FollowingColumn2 are the table columns denoting the
-	// primary key for the following relation (M2M).
-	FollowingPrimaryKey = []string{"user_account_id", "follower_id"}
-	// BlockedByPrimaryKey and BlockedByColumn2 are the table columns denoting the
-	// primary key for the blocked_by relation (M2M).
-	BlockedByPrimaryKey = []string{"user_account_id", "blocked_by_id"}
-	// BlockedUserPrimaryKey and BlockedUserColumn2 are the table columns denoting the
-	// primary key for the blocked_user relation (M2M).
-	BlockedUserPrimaryKey = []string{"user_account_id", "blocked_by_id"}
-)
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -177,17 +180,17 @@ func ByFollowers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByFollowingCount orders the results by following count.
-func ByFollowingCount(opts ...sql.OrderTermOption) OrderOption {
+// ByFollowingsCount orders the results by followings count.
+func ByFollowingsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newFollowingStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newFollowingsStep(), opts...)
 	}
 }
 
-// ByFollowing orders the results by following terms.
-func ByFollowing(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByFollowings orders the results by followings terms.
+func ByFollowings(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newFollowingStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newFollowingsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -205,24 +208,38 @@ func ByBlockedBy(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByBlockedUserCount orders the results by blocked_user count.
-func ByBlockedUserCount(opts ...sql.OrderTermOption) OrderOption {
+// ByBlockedUsersCount orders the results by blocked_users count.
+func ByBlockedUsersCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newBlockedUserStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newBlockedUsersStep(), opts...)
 	}
 }
 
-// ByBlockedUser orders the results by blocked_user terms.
-func ByBlockedUser(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByBlockedUsers orders the results by blocked_users terms.
+func ByBlockedUsers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newBlockedUserStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newBlockedUsersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
-// ByUserCountInfoField orders the results by user_count_info field.
-func ByUserCountInfoField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByUserCountField orders the results by user_count field.
+func ByUserCountField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUserCountInfoStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newUserCountStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByThreadsCount orders the results by threads count.
+func ByThreadsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newThreadsStep(), opts...)
+	}
+}
+
+// ByThreads orders the results by threads terms.
+func ByThreads(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newThreadsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newProfileStep() *sqlgraph.Step {
@@ -235,35 +252,42 @@ func newProfileStep() *sqlgraph.Step {
 func newFollowersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, true, FollowersTable, FollowersPrimaryKey...),
+		sqlgraph.To(FollowersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, FollowersTable, FollowersColumn),
 	)
 }
-func newFollowingStep() *sqlgraph.Step {
+func newFollowingsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, FollowingTable, FollowingPrimaryKey...),
+		sqlgraph.To(FollowingsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, FollowingsTable, FollowingsColumn),
 	)
 }
 func newBlockedByStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, true, BlockedByTable, BlockedByPrimaryKey...),
+		sqlgraph.To(BlockedByInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BlockedByTable, BlockedByColumn),
 	)
 }
-func newBlockedUserStep() *sqlgraph.Step {
+func newBlockedUsersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(Table, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, BlockedUserTable, BlockedUserPrimaryKey...),
+		sqlgraph.To(BlockedUsersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BlockedUsersTable, BlockedUsersColumn),
 	)
 }
-func newUserCountInfoStep() *sqlgraph.Step {
+func newUserCountStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UserCountInfoInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, UserCountInfoTable, UserCountInfoColumn),
+		sqlgraph.To(UserCountInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, UserCountTable, UserCountColumn),
+	)
+}
+func newThreadsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ThreadsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ThreadsTable, ThreadsColumn),
 	)
 }

@@ -37,14 +37,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "userprofile" package.
 	OwnerProfilePictureInverseTable = "user_profile"
 	// OwnerProfilePictureColumn is the table column denoting the owner_profile_picture relation/edge.
-	OwnerProfilePictureColumn = "user_profile_profile_picture"
+	OwnerProfilePictureColumn = "profile_picture_id"
 	// OwnerBannerTable is the table that holds the owner_banner relation/edge.
 	OwnerBannerTable = "user_profile"
 	// OwnerBannerInverseTable is the table name for the UserProfile entity.
 	// It exists in this package in order to avoid circular dependency with the "userprofile" package.
 	OwnerBannerInverseTable = "user_profile"
 	// OwnerBannerColumn is the table column denoting the owner_banner relation/edge.
-	OwnerBannerColumn = "user_profile_banner"
+	OwnerBannerColumn = "banner_id"
 )
 
 // Columns holds all SQL columns for media fields.

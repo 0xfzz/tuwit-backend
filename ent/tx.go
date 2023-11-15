@@ -12,16 +12,22 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// BlockedUsersRelationship is the client for interacting with the BlockedUsersRelationship builders.
+	BlockedUsersRelationship *BlockedUsersRelationshipClient
 	// Media is the client for interacting with the Media builders.
 	Media *MediaClient
 	// Thread is the client for interacting with the Thread builders.
 	Thread *ThreadClient
 	// ThreadCount is the client for interacting with the ThreadCount builders.
 	ThreadCount *ThreadCountClient
+	// ThreadLikeUser is the client for interacting with the ThreadLikeUser builders.
+	ThreadLikeUser *ThreadLikeUserClient
 	// UserAccount is the client for interacting with the UserAccount builders.
 	UserAccount *UserAccountClient
 	// UserCount is the client for interacting with the UserCount builders.
 	UserCount *UserCountClient
+	// UserFollowerRelationship is the client for interacting with the UserFollowerRelationship builders.
+	UserFollowerRelationship *UserFollowerRelationshipClient
 	// UserProfile is the client for interacting with the UserProfile builders.
 	UserProfile *UserProfileClient
 
@@ -155,11 +161,14 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.BlockedUsersRelationship = NewBlockedUsersRelationshipClient(tx.config)
 	tx.Media = NewMediaClient(tx.config)
 	tx.Thread = NewThreadClient(tx.config)
 	tx.ThreadCount = NewThreadCountClient(tx.config)
+	tx.ThreadLikeUser = NewThreadLikeUserClient(tx.config)
 	tx.UserAccount = NewUserAccountClient(tx.config)
 	tx.UserCount = NewUserCountClient(tx.config)
+	tx.UserFollowerRelationship = NewUserFollowerRelationshipClient(tx.config)
 	tx.UserProfile = NewUserProfileClient(tx.config)
 }
 
@@ -170,7 +179,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Media.QueryXXX(), the query will be executed
+// applies a query, for example: BlockedUsersRelationship.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

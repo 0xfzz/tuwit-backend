@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
 )
 
@@ -19,8 +20,34 @@ type ThreadCount struct {
 	// ReplyCount holds the value of the "reply_count" field.
 	ReplyCount int `json:"reply_count,omitempty"`
 	// LikeCount holds the value of the "like_count" field.
-	LikeCount    int `json:"like_count,omitempty"`
-	selectValues sql.SelectValues
+	LikeCount int `json:"like_count,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ThreadCountQuery when eager-loading is set.
+	Edges               ThreadCountEdges `json:"edges"`
+	thread_thread_count *int
+	selectValues        sql.SelectValues
+}
+
+// ThreadCountEdges holds the relations/edges for other nodes in the graph.
+type ThreadCountEdges struct {
+	// Thread holds the value of the thread edge.
+	Thread *Thread `json:"thread,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ThreadOrErr returns the Thread value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ThreadCountEdges) ThreadOrErr() (*Thread, error) {
+	if e.loadedTypes[0] {
+		if e.Thread == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: thread.Label}
+		}
+		return e.Thread, nil
+	}
+	return nil, &NotLoadedError{edge: "thread"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -29,6 +56,8 @@ func (*ThreadCount) scanValues(columns []string) ([]any, error) {
 	for i := range columns {
 		switch columns[i] {
 		case threadcount.FieldID, threadcount.FieldReplyCount, threadcount.FieldLikeCount:
+			values[i] = new(sql.NullInt64)
+		case threadcount.ForeignKeys[0]: // thread_thread_count
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -63,6 +92,13 @@ func (tc *ThreadCount) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				tc.LikeCount = int(value.Int64)
 			}
+		case threadcount.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field thread_thread_count", value)
+			} else if value.Valid {
+				tc.thread_thread_count = new(int)
+				*tc.thread_thread_count = int(value.Int64)
+			}
 		default:
 			tc.selectValues.Set(columns[i], values[i])
 		}
@@ -74,6 +110,11 @@ func (tc *ThreadCount) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (tc *ThreadCount) Value(name string) (ent.Value, error) {
 	return tc.selectValues.Get(name)
+}
+
+// QueryThread queries the "thread" edge of the ThreadCount entity.
+func (tc *ThreadCount) QueryThread() *ThreadQuery {
+	return NewThreadCountClient(tc.config).QueryThread(tc)
 }
 
 // Update returns a builder for updating this ThreadCount.

@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
 )
 
@@ -22,23 +23,28 @@ type UserCount struct {
 	FollowingsCount int `json:"followings_count,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserCountQuery when eager-loading is set.
-	Edges        UserCountEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges                   UserCountEdges `json:"edges"`
+	user_account_user_count *int
+	selectValues            sql.SelectValues
 }
 
 // UserCountEdges holds the relations/edges for other nodes in the graph.
 type UserCountEdges struct {
 	// User holds the value of the user edge.
-	User []*UserAccount `json:"user,omitempty"`
+	User *UserAccount `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
-// was not loaded in eager-loading.
-func (e UserCountEdges) UserOrErr() ([]*UserAccount, error) {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserCountEdges) UserOrErr() (*UserAccount, error) {
 	if e.loadedTypes[0] {
+		if e.User == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: useraccount.Label}
+		}
 		return e.User, nil
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -50,6 +56,8 @@ func (*UserCount) scanValues(columns []string) ([]any, error) {
 	for i := range columns {
 		switch columns[i] {
 		case usercount.FieldID, usercount.FieldFollowerCount, usercount.FieldFollowingsCount:
+			values[i] = new(sql.NullInt64)
+		case usercount.ForeignKeys[0]: // user_account_user_count
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -83,6 +91,13 @@ func (uc *UserCount) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field followings_count", values[i])
 			} else if value.Valid {
 				uc.FollowingsCount = int(value.Int64)
+			}
+		case usercount.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_account_user_count", value)
+			} else if value.Valid {
+				uc.user_account_user_count = new(int)
+				*uc.user_account_user_count = int(value.Int64)
 			}
 		default:
 			uc.selectValues.Set(columns[i], values[i])

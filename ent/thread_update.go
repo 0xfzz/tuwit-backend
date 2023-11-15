@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -13,6 +14,8 @@ import (
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/predicate"
 	"github.com/0xfzz/tuwitt/ent/thread"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
+	"github.com/0xfzz/tuwitt/ent/useraccount"
 )
 
 // ThreadUpdate is the builder for updating Thread entities.
@@ -25,6 +28,12 @@ type ThreadUpdate struct {
 // Where appends a list predicates to the ThreadUpdate builder.
 func (tu *ThreadUpdate) Where(ps ...predicate.Thread) *ThreadUpdate {
 	tu.mutation.Where(ps...)
+	return tu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (tu *ThreadUpdate) SetUpdatedAt(t time.Time) *ThreadUpdate {
+	tu.mutation.SetUpdatedAt(t)
 	return tu
 }
 
@@ -54,9 +63,25 @@ func (tu *ThreadUpdate) SetVisibility(t thread.Visibility) *ThreadUpdate {
 	return tu
 }
 
+// SetNillableVisibility sets the "visibility" field if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableVisibility(t *thread.Visibility) *ThreadUpdate {
+	if t != nil {
+		tu.SetVisibility(*t)
+	}
+	return tu
+}
+
 // SetStatus sets the "status" field.
 func (tu *ThreadUpdate) SetStatus(t thread.Status) *ThreadUpdate {
 	tu.mutation.SetStatus(t)
+	return tu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableStatus(t *thread.Status) *ThreadUpdate {
+	if t != nil {
+		tu.SetStatus(*t)
+	}
 	return tu
 }
 
@@ -74,38 +99,142 @@ func (tu *ThreadUpdate) SetNillableIsDeleted(b *bool) *ThreadUpdate {
 	return tu
 }
 
-// SetParentThreadID sets the "parent_thread" edge to the Thread entity by ID.
-func (tu *ThreadUpdate) SetParentThreadID(id int) *ThreadUpdate {
-	tu.mutation.SetParentThreadID(id)
+// SetAuthorID sets the "author_id" field.
+func (tu *ThreadUpdate) SetAuthorID(i int) *ThreadUpdate {
+	tu.mutation.SetAuthorID(i)
 	return tu
 }
 
-// SetNillableParentThreadID sets the "parent_thread" edge to the Thread entity by ID if the given value is not nil.
-func (tu *ThreadUpdate) SetNillableParentThreadID(id *int) *ThreadUpdate {
-	if id != nil {
-		tu = tu.SetParentThreadID(*id)
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableAuthorID(i *int) *ThreadUpdate {
+	if i != nil {
+		tu.SetAuthorID(*i)
 	}
 	return tu
 }
 
-// SetParentThread sets the "parent_thread" edge to the Thread entity.
-func (tu *ThreadUpdate) SetParentThread(t *Thread) *ThreadUpdate {
-	return tu.SetParentThreadID(t.ID)
-}
-
-// AddChildThreadIDs adds the "child_threads" edge to the Thread entity by IDs.
-func (tu *ThreadUpdate) AddChildThreadIDs(ids ...int) *ThreadUpdate {
-	tu.mutation.AddChildThreadIDs(ids...)
+// ClearAuthorID clears the value of the "author_id" field.
+func (tu *ThreadUpdate) ClearAuthorID() *ThreadUpdate {
+	tu.mutation.ClearAuthorID()
 	return tu
 }
 
-// AddChildThreads adds the "child_threads" edges to the Thread entity.
-func (tu *ThreadUpdate) AddChildThreads(t ...*Thread) *ThreadUpdate {
+// SetParentID sets the "parent_id" field.
+func (tu *ThreadUpdate) SetParentID(i int) *ThreadUpdate {
+	tu.mutation.SetParentID(i)
+	return tu
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableParentID(i *int) *ThreadUpdate {
+	if i != nil {
+		tu.SetParentID(*i)
+	}
+	return tu
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (tu *ThreadUpdate) ClearParentID() *ThreadUpdate {
+	tu.mutation.ClearParentID()
+	return tu
+}
+
+// SetRepostThreadID sets the "repost_thread_id" field.
+func (tu *ThreadUpdate) SetRepostThreadID(i int) *ThreadUpdate {
+	tu.mutation.SetRepostThreadID(i)
+	return tu
+}
+
+// SetNillableRepostThreadID sets the "repost_thread_id" field if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableRepostThreadID(i *int) *ThreadUpdate {
+	if i != nil {
+		tu.SetRepostThreadID(*i)
+	}
+	return tu
+}
+
+// ClearRepostThreadID clears the value of the "repost_thread_id" field.
+func (tu *ThreadUpdate) ClearRepostThreadID() *ThreadUpdate {
+	tu.mutation.ClearRepostThreadID()
+	return tu
+}
+
+// SetAuthor sets the "author" edge to the UserAccount entity.
+func (tu *ThreadUpdate) SetAuthor(u *UserAccount) *ThreadUpdate {
+	return tu.SetAuthorID(u.ID)
+}
+
+// SetParent sets the "parent" edge to the Thread entity.
+func (tu *ThreadUpdate) SetParent(t *Thread) *ThreadUpdate {
+	return tu.SetParentID(t.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Thread entity by IDs.
+func (tu *ThreadUpdate) AddChildIDs(ids ...int) *ThreadUpdate {
+	tu.mutation.AddChildIDs(ids...)
+	return tu
+}
+
+// AddChildren adds the "children" edges to the Thread entity.
+func (tu *ThreadUpdate) AddChildren(t ...*Thread) *ThreadUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return tu.AddChildThreadIDs(ids...)
+	return tu.AddChildIDs(ids...)
+}
+
+// AddThreadCountIDs adds the "thread_count" edge to the ThreadCount entity by IDs.
+func (tu *ThreadUpdate) AddThreadCountIDs(ids ...int) *ThreadUpdate {
+	tu.mutation.AddThreadCountIDs(ids...)
+	return tu
+}
+
+// AddThreadCount adds the "thread_count" edges to the ThreadCount entity.
+func (tu *ThreadUpdate) AddThreadCount(t ...*ThreadCount) *ThreadUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.AddThreadCountIDs(ids...)
+}
+
+// SetRepostedID sets the "reposted" edge to the Thread entity by ID.
+func (tu *ThreadUpdate) SetRepostedID(id int) *ThreadUpdate {
+	tu.mutation.SetRepostedID(id)
+	return tu
+}
+
+// SetNillableRepostedID sets the "reposted" edge to the Thread entity by ID if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableRepostedID(id *int) *ThreadUpdate {
+	if id != nil {
+		tu = tu.SetRepostedID(*id)
+	}
+	return tu
+}
+
+// SetReposted sets the "reposted" edge to the Thread entity.
+func (tu *ThreadUpdate) SetReposted(t *Thread) *ThreadUpdate {
+	return tu.SetRepostedID(t.ID)
+}
+
+// SetRepostID sets the "repost" edge to the Thread entity by ID.
+func (tu *ThreadUpdate) SetRepostID(id int) *ThreadUpdate {
+	tu.mutation.SetRepostID(id)
+	return tu
+}
+
+// SetNillableRepostID sets the "repost" edge to the Thread entity by ID if the given value is not nil.
+func (tu *ThreadUpdate) SetNillableRepostID(id *int) *ThreadUpdate {
+	if id != nil {
+		tu = tu.SetRepostID(*id)
+	}
+	return tu
+}
+
+// SetRepost sets the "repost" edge to the Thread entity.
+func (tu *ThreadUpdate) SetRepost(t *Thread) *ThreadUpdate {
+	return tu.SetRepostID(t.ID)
 }
 
 // AddImageIDs adds the "images" edge to the Media entity by IDs.
@@ -128,31 +257,70 @@ func (tu *ThreadUpdate) Mutation() *ThreadMutation {
 	return tu.mutation
 }
 
-// ClearParentThread clears the "parent_thread" edge to the Thread entity.
-func (tu *ThreadUpdate) ClearParentThread() *ThreadUpdate {
-	tu.mutation.ClearParentThread()
+// ClearAuthor clears the "author" edge to the UserAccount entity.
+func (tu *ThreadUpdate) ClearAuthor() *ThreadUpdate {
+	tu.mutation.ClearAuthor()
 	return tu
 }
 
-// ClearChildThreads clears all "child_threads" edges to the Thread entity.
-func (tu *ThreadUpdate) ClearChildThreads() *ThreadUpdate {
-	tu.mutation.ClearChildThreads()
+// ClearParent clears the "parent" edge to the Thread entity.
+func (tu *ThreadUpdate) ClearParent() *ThreadUpdate {
+	tu.mutation.ClearParent()
 	return tu
 }
 
-// RemoveChildThreadIDs removes the "child_threads" edge to Thread entities by IDs.
-func (tu *ThreadUpdate) RemoveChildThreadIDs(ids ...int) *ThreadUpdate {
-	tu.mutation.RemoveChildThreadIDs(ids...)
+// ClearChildren clears all "children" edges to the Thread entity.
+func (tu *ThreadUpdate) ClearChildren() *ThreadUpdate {
+	tu.mutation.ClearChildren()
 	return tu
 }
 
-// RemoveChildThreads removes "child_threads" edges to Thread entities.
-func (tu *ThreadUpdate) RemoveChildThreads(t ...*Thread) *ThreadUpdate {
+// RemoveChildIDs removes the "children" edge to Thread entities by IDs.
+func (tu *ThreadUpdate) RemoveChildIDs(ids ...int) *ThreadUpdate {
+	tu.mutation.RemoveChildIDs(ids...)
+	return tu
+}
+
+// RemoveChildren removes "children" edges to Thread entities.
+func (tu *ThreadUpdate) RemoveChildren(t ...*Thread) *ThreadUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return tu.RemoveChildThreadIDs(ids...)
+	return tu.RemoveChildIDs(ids...)
+}
+
+// ClearThreadCount clears all "thread_count" edges to the ThreadCount entity.
+func (tu *ThreadUpdate) ClearThreadCount() *ThreadUpdate {
+	tu.mutation.ClearThreadCount()
+	return tu
+}
+
+// RemoveThreadCountIDs removes the "thread_count" edge to ThreadCount entities by IDs.
+func (tu *ThreadUpdate) RemoveThreadCountIDs(ids ...int) *ThreadUpdate {
+	tu.mutation.RemoveThreadCountIDs(ids...)
+	return tu
+}
+
+// RemoveThreadCount removes "thread_count" edges to ThreadCount entities.
+func (tu *ThreadUpdate) RemoveThreadCount(t ...*ThreadCount) *ThreadUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.RemoveThreadCountIDs(ids...)
+}
+
+// ClearReposted clears the "reposted" edge to the Thread entity.
+func (tu *ThreadUpdate) ClearReposted() *ThreadUpdate {
+	tu.mutation.ClearReposted()
+	return tu
+}
+
+// ClearRepost clears the "repost" edge to the Thread entity.
+func (tu *ThreadUpdate) ClearRepost() *ThreadUpdate {
+	tu.mutation.ClearRepost()
+	return tu
 }
 
 // ClearImages clears all "images" edges to the Media entity.
@@ -178,6 +346,7 @@ func (tu *ThreadUpdate) RemoveImages(m ...*Media) *ThreadUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (tu *ThreadUpdate) Save(ctx context.Context) (int, error) {
+	tu.defaults()
 	return withHooks(ctx, tu.sqlSave, tu.mutation, tu.hooks)
 }
 
@@ -200,6 +369,14 @@ func (tu *ThreadUpdate) Exec(ctx context.Context) error {
 func (tu *ThreadUpdate) ExecX(ctx context.Context) {
 	if err := tu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (tu *ThreadUpdate) defaults() {
+	if _, ok := tu.mutation.UpdatedAt(); !ok {
+		v := thread.UpdateDefaultUpdatedAt()
+		tu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -230,6 +407,9 @@ func (tu *ThreadUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := tu.mutation.UpdatedAt(); ok {
+		_spec.SetField(thread.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := tu.mutation.Content(); ok {
 		_spec.SetField(thread.FieldContent, field.TypeString, value)
 	}
@@ -245,12 +425,41 @@ func (tu *ThreadUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.IsDeleted(); ok {
 		_spec.SetField(thread.FieldIsDeleted, field.TypeBool, value)
 	}
-	if tu.mutation.ParentThreadCleared() {
+	if tu.mutation.AuthorCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   thread.ParentThreadTable,
-			Columns: []string{thread.ParentThreadColumn},
+			Table:   thread.AuthorTable,
+			Columns: []string{thread.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   thread.AuthorTable,
+			Columns: []string{thread.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   thread.ParentTable,
+			Columns: []string{thread.ParentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -258,12 +467,12 @@ func (tu *ThreadUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.ParentThreadIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   thread.ParentThreadTable,
-			Columns: []string{thread.ParentThreadColumn},
+			Table:   thread.ParentTable,
+			Columns: []string{thread.ParentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -274,12 +483,12 @@ func (tu *ThreadUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.ChildThreadsCleared() {
+	if tu.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -287,12 +496,12 @@ func (tu *ThreadUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedChildThreadsIDs(); len(nodes) > 0 && !tu.mutation.ChildThreadsCleared() {
+	if nodes := tu.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !tu.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -303,12 +512,115 @@ func (tu *ThreadUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.ChildThreadsIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.ChildrenIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.ThreadCountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedThreadCountIDs(); len(nodes) > 0 && !tu.mutation.ThreadCountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.ThreadCountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.RepostedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   thread.RepostedTable,
+			Columns: []string{thread.RepostedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RepostedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   thread.RepostedTable,
+			Columns: []string{thread.RepostedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.RepostCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   thread.RepostTable,
+			Columns: []string{thread.RepostColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RepostIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   thread.RepostTable,
+			Columns: []string{thread.RepostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -384,6 +696,12 @@ type ThreadUpdateOne struct {
 	mutation *ThreadMutation
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (tuo *ThreadUpdateOne) SetUpdatedAt(t time.Time) *ThreadUpdateOne {
+	tuo.mutation.SetUpdatedAt(t)
+	return tuo
+}
+
 // SetContent sets the "content" field.
 func (tuo *ThreadUpdateOne) SetContent(s string) *ThreadUpdateOne {
 	tuo.mutation.SetContent(s)
@@ -410,9 +728,25 @@ func (tuo *ThreadUpdateOne) SetVisibility(t thread.Visibility) *ThreadUpdateOne 
 	return tuo
 }
 
+// SetNillableVisibility sets the "visibility" field if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableVisibility(t *thread.Visibility) *ThreadUpdateOne {
+	if t != nil {
+		tuo.SetVisibility(*t)
+	}
+	return tuo
+}
+
 // SetStatus sets the "status" field.
 func (tuo *ThreadUpdateOne) SetStatus(t thread.Status) *ThreadUpdateOne {
 	tuo.mutation.SetStatus(t)
+	return tuo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableStatus(t *thread.Status) *ThreadUpdateOne {
+	if t != nil {
+		tuo.SetStatus(*t)
+	}
 	return tuo
 }
 
@@ -430,38 +764,142 @@ func (tuo *ThreadUpdateOne) SetNillableIsDeleted(b *bool) *ThreadUpdateOne {
 	return tuo
 }
 
-// SetParentThreadID sets the "parent_thread" edge to the Thread entity by ID.
-func (tuo *ThreadUpdateOne) SetParentThreadID(id int) *ThreadUpdateOne {
-	tuo.mutation.SetParentThreadID(id)
+// SetAuthorID sets the "author_id" field.
+func (tuo *ThreadUpdateOne) SetAuthorID(i int) *ThreadUpdateOne {
+	tuo.mutation.SetAuthorID(i)
 	return tuo
 }
 
-// SetNillableParentThreadID sets the "parent_thread" edge to the Thread entity by ID if the given value is not nil.
-func (tuo *ThreadUpdateOne) SetNillableParentThreadID(id *int) *ThreadUpdateOne {
-	if id != nil {
-		tuo = tuo.SetParentThreadID(*id)
+// SetNillableAuthorID sets the "author_id" field if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableAuthorID(i *int) *ThreadUpdateOne {
+	if i != nil {
+		tuo.SetAuthorID(*i)
 	}
 	return tuo
 }
 
-// SetParentThread sets the "parent_thread" edge to the Thread entity.
-func (tuo *ThreadUpdateOne) SetParentThread(t *Thread) *ThreadUpdateOne {
-	return tuo.SetParentThreadID(t.ID)
-}
-
-// AddChildThreadIDs adds the "child_threads" edge to the Thread entity by IDs.
-func (tuo *ThreadUpdateOne) AddChildThreadIDs(ids ...int) *ThreadUpdateOne {
-	tuo.mutation.AddChildThreadIDs(ids...)
+// ClearAuthorID clears the value of the "author_id" field.
+func (tuo *ThreadUpdateOne) ClearAuthorID() *ThreadUpdateOne {
+	tuo.mutation.ClearAuthorID()
 	return tuo
 }
 
-// AddChildThreads adds the "child_threads" edges to the Thread entity.
-func (tuo *ThreadUpdateOne) AddChildThreads(t ...*Thread) *ThreadUpdateOne {
+// SetParentID sets the "parent_id" field.
+func (tuo *ThreadUpdateOne) SetParentID(i int) *ThreadUpdateOne {
+	tuo.mutation.SetParentID(i)
+	return tuo
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableParentID(i *int) *ThreadUpdateOne {
+	if i != nil {
+		tuo.SetParentID(*i)
+	}
+	return tuo
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (tuo *ThreadUpdateOne) ClearParentID() *ThreadUpdateOne {
+	tuo.mutation.ClearParentID()
+	return tuo
+}
+
+// SetRepostThreadID sets the "repost_thread_id" field.
+func (tuo *ThreadUpdateOne) SetRepostThreadID(i int) *ThreadUpdateOne {
+	tuo.mutation.SetRepostThreadID(i)
+	return tuo
+}
+
+// SetNillableRepostThreadID sets the "repost_thread_id" field if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableRepostThreadID(i *int) *ThreadUpdateOne {
+	if i != nil {
+		tuo.SetRepostThreadID(*i)
+	}
+	return tuo
+}
+
+// ClearRepostThreadID clears the value of the "repost_thread_id" field.
+func (tuo *ThreadUpdateOne) ClearRepostThreadID() *ThreadUpdateOne {
+	tuo.mutation.ClearRepostThreadID()
+	return tuo
+}
+
+// SetAuthor sets the "author" edge to the UserAccount entity.
+func (tuo *ThreadUpdateOne) SetAuthor(u *UserAccount) *ThreadUpdateOne {
+	return tuo.SetAuthorID(u.ID)
+}
+
+// SetParent sets the "parent" edge to the Thread entity.
+func (tuo *ThreadUpdateOne) SetParent(t *Thread) *ThreadUpdateOne {
+	return tuo.SetParentID(t.ID)
+}
+
+// AddChildIDs adds the "children" edge to the Thread entity by IDs.
+func (tuo *ThreadUpdateOne) AddChildIDs(ids ...int) *ThreadUpdateOne {
+	tuo.mutation.AddChildIDs(ids...)
+	return tuo
+}
+
+// AddChildren adds the "children" edges to the Thread entity.
+func (tuo *ThreadUpdateOne) AddChildren(t ...*Thread) *ThreadUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return tuo.AddChildThreadIDs(ids...)
+	return tuo.AddChildIDs(ids...)
+}
+
+// AddThreadCountIDs adds the "thread_count" edge to the ThreadCount entity by IDs.
+func (tuo *ThreadUpdateOne) AddThreadCountIDs(ids ...int) *ThreadUpdateOne {
+	tuo.mutation.AddThreadCountIDs(ids...)
+	return tuo
+}
+
+// AddThreadCount adds the "thread_count" edges to the ThreadCount entity.
+func (tuo *ThreadUpdateOne) AddThreadCount(t ...*ThreadCount) *ThreadUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.AddThreadCountIDs(ids...)
+}
+
+// SetRepostedID sets the "reposted" edge to the Thread entity by ID.
+func (tuo *ThreadUpdateOne) SetRepostedID(id int) *ThreadUpdateOne {
+	tuo.mutation.SetRepostedID(id)
+	return tuo
+}
+
+// SetNillableRepostedID sets the "reposted" edge to the Thread entity by ID if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableRepostedID(id *int) *ThreadUpdateOne {
+	if id != nil {
+		tuo = tuo.SetRepostedID(*id)
+	}
+	return tuo
+}
+
+// SetReposted sets the "reposted" edge to the Thread entity.
+func (tuo *ThreadUpdateOne) SetReposted(t *Thread) *ThreadUpdateOne {
+	return tuo.SetRepostedID(t.ID)
+}
+
+// SetRepostID sets the "repost" edge to the Thread entity by ID.
+func (tuo *ThreadUpdateOne) SetRepostID(id int) *ThreadUpdateOne {
+	tuo.mutation.SetRepostID(id)
+	return tuo
+}
+
+// SetNillableRepostID sets the "repost" edge to the Thread entity by ID if the given value is not nil.
+func (tuo *ThreadUpdateOne) SetNillableRepostID(id *int) *ThreadUpdateOne {
+	if id != nil {
+		tuo = tuo.SetRepostID(*id)
+	}
+	return tuo
+}
+
+// SetRepost sets the "repost" edge to the Thread entity.
+func (tuo *ThreadUpdateOne) SetRepost(t *Thread) *ThreadUpdateOne {
+	return tuo.SetRepostID(t.ID)
 }
 
 // AddImageIDs adds the "images" edge to the Media entity by IDs.
@@ -484,31 +922,70 @@ func (tuo *ThreadUpdateOne) Mutation() *ThreadMutation {
 	return tuo.mutation
 }
 
-// ClearParentThread clears the "parent_thread" edge to the Thread entity.
-func (tuo *ThreadUpdateOne) ClearParentThread() *ThreadUpdateOne {
-	tuo.mutation.ClearParentThread()
+// ClearAuthor clears the "author" edge to the UserAccount entity.
+func (tuo *ThreadUpdateOne) ClearAuthor() *ThreadUpdateOne {
+	tuo.mutation.ClearAuthor()
 	return tuo
 }
 
-// ClearChildThreads clears all "child_threads" edges to the Thread entity.
-func (tuo *ThreadUpdateOne) ClearChildThreads() *ThreadUpdateOne {
-	tuo.mutation.ClearChildThreads()
+// ClearParent clears the "parent" edge to the Thread entity.
+func (tuo *ThreadUpdateOne) ClearParent() *ThreadUpdateOne {
+	tuo.mutation.ClearParent()
 	return tuo
 }
 
-// RemoveChildThreadIDs removes the "child_threads" edge to Thread entities by IDs.
-func (tuo *ThreadUpdateOne) RemoveChildThreadIDs(ids ...int) *ThreadUpdateOne {
-	tuo.mutation.RemoveChildThreadIDs(ids...)
+// ClearChildren clears all "children" edges to the Thread entity.
+func (tuo *ThreadUpdateOne) ClearChildren() *ThreadUpdateOne {
+	tuo.mutation.ClearChildren()
 	return tuo
 }
 
-// RemoveChildThreads removes "child_threads" edges to Thread entities.
-func (tuo *ThreadUpdateOne) RemoveChildThreads(t ...*Thread) *ThreadUpdateOne {
+// RemoveChildIDs removes the "children" edge to Thread entities by IDs.
+func (tuo *ThreadUpdateOne) RemoveChildIDs(ids ...int) *ThreadUpdateOne {
+	tuo.mutation.RemoveChildIDs(ids...)
+	return tuo
+}
+
+// RemoveChildren removes "children" edges to Thread entities.
+func (tuo *ThreadUpdateOne) RemoveChildren(t ...*Thread) *ThreadUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
-	return tuo.RemoveChildThreadIDs(ids...)
+	return tuo.RemoveChildIDs(ids...)
+}
+
+// ClearThreadCount clears all "thread_count" edges to the ThreadCount entity.
+func (tuo *ThreadUpdateOne) ClearThreadCount() *ThreadUpdateOne {
+	tuo.mutation.ClearThreadCount()
+	return tuo
+}
+
+// RemoveThreadCountIDs removes the "thread_count" edge to ThreadCount entities by IDs.
+func (tuo *ThreadUpdateOne) RemoveThreadCountIDs(ids ...int) *ThreadUpdateOne {
+	tuo.mutation.RemoveThreadCountIDs(ids...)
+	return tuo
+}
+
+// RemoveThreadCount removes "thread_count" edges to ThreadCount entities.
+func (tuo *ThreadUpdateOne) RemoveThreadCount(t ...*ThreadCount) *ThreadUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.RemoveThreadCountIDs(ids...)
+}
+
+// ClearReposted clears the "reposted" edge to the Thread entity.
+func (tuo *ThreadUpdateOne) ClearReposted() *ThreadUpdateOne {
+	tuo.mutation.ClearReposted()
+	return tuo
+}
+
+// ClearRepost clears the "repost" edge to the Thread entity.
+func (tuo *ThreadUpdateOne) ClearRepost() *ThreadUpdateOne {
+	tuo.mutation.ClearRepost()
+	return tuo
 }
 
 // ClearImages clears all "images" edges to the Media entity.
@@ -547,6 +1024,7 @@ func (tuo *ThreadUpdateOne) Select(field string, fields ...string) *ThreadUpdate
 
 // Save executes the query and returns the updated Thread entity.
 func (tuo *ThreadUpdateOne) Save(ctx context.Context) (*Thread, error) {
+	tuo.defaults()
 	return withHooks(ctx, tuo.sqlSave, tuo.mutation, tuo.hooks)
 }
 
@@ -569,6 +1047,14 @@ func (tuo *ThreadUpdateOne) Exec(ctx context.Context) error {
 func (tuo *ThreadUpdateOne) ExecX(ctx context.Context) {
 	if err := tuo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (tuo *ThreadUpdateOne) defaults() {
+	if _, ok := tuo.mutation.UpdatedAt(); !ok {
+		v := thread.UpdateDefaultUpdatedAt()
+		tuo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -616,6 +1102,9 @@ func (tuo *ThreadUpdateOne) sqlSave(ctx context.Context) (_node *Thread, err err
 			}
 		}
 	}
+	if value, ok := tuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(thread.FieldUpdatedAt, field.TypeTime, value)
+	}
 	if value, ok := tuo.mutation.Content(); ok {
 		_spec.SetField(thread.FieldContent, field.TypeString, value)
 	}
@@ -631,12 +1120,41 @@ func (tuo *ThreadUpdateOne) sqlSave(ctx context.Context) (_node *Thread, err err
 	if value, ok := tuo.mutation.IsDeleted(); ok {
 		_spec.SetField(thread.FieldIsDeleted, field.TypeBool, value)
 	}
-	if tuo.mutation.ParentThreadCleared() {
+	if tuo.mutation.AuthorCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   thread.ParentThreadTable,
-			Columns: []string{thread.ParentThreadColumn},
+			Table:   thread.AuthorTable,
+			Columns: []string{thread.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.AuthorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   thread.AuthorTable,
+			Columns: []string{thread.AuthorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.ParentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   thread.ParentTable,
+			Columns: []string{thread.ParentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -644,12 +1162,12 @@ func (tuo *ThreadUpdateOne) sqlSave(ctx context.Context) (_node *Thread, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.ParentThreadIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   thread.ParentThreadTable,
-			Columns: []string{thread.ParentThreadColumn},
+			Table:   thread.ParentTable,
+			Columns: []string{thread.ParentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -660,12 +1178,12 @@ func (tuo *ThreadUpdateOne) sqlSave(ctx context.Context) (_node *Thread, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.ChildThreadsCleared() {
+	if tuo.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -673,12 +1191,12 @@ func (tuo *ThreadUpdateOne) sqlSave(ctx context.Context) (_node *Thread, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedChildThreadsIDs(); len(nodes) > 0 && !tuo.mutation.ChildThreadsCleared() {
+	if nodes := tuo.mutation.RemovedChildrenIDs(); len(nodes) > 0 && !tuo.mutation.ChildrenCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
@@ -689,12 +1207,115 @@ func (tuo *ThreadUpdateOne) sqlSave(ctx context.Context) (_node *Thread, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.ChildThreadsIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.ChildrenIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   thread.ChildThreadsTable,
-			Columns: []string{thread.ChildThreadsColumn},
+			Table:   thread.ChildrenTable,
+			Columns: []string{thread.ChildrenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.ThreadCountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedThreadCountIDs(); len(nodes) > 0 && !tuo.mutation.ThreadCountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.ThreadCountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   thread.ThreadCountTable,
+			Columns: []string{thread.ThreadCountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.RepostedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   thread.RepostedTable,
+			Columns: []string{thread.RepostedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RepostedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   thread.RepostedTable,
+			Columns: []string{thread.RepostedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.RepostCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   thread.RepostTable,
+			Columns: []string{thread.RepostColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RepostIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   thread.RepostTable,
+			Columns: []string{thread.RepostColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),

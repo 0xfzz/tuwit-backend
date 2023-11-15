@@ -16,6 +16,10 @@ const (
 	FieldDisplayName = "display_name"
 	// FieldBio holds the string denoting the bio field in the database.
 	FieldBio = "bio"
+	// FieldProfilePictureID holds the string denoting the profile_picture_id field in the database.
+	FieldProfilePictureID = "profile_picture_id"
+	// FieldBannerID holds the string denoting the banner_id field in the database.
+	FieldBannerID = "banner_id"
 	// EdgeAccount holds the string denoting the account edge name in mutations.
 	EdgeAccount = "account"
 	// EdgeProfilePicture holds the string denoting the profile_picture edge name in mutations.
@@ -37,14 +41,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "media" package.
 	ProfilePictureInverseTable = "media"
 	// ProfilePictureColumn is the table column denoting the profile_picture relation/edge.
-	ProfilePictureColumn = "user_profile_profile_picture"
+	ProfilePictureColumn = "profile_picture_id"
 	// BannerTable is the table that holds the banner relation/edge.
 	BannerTable = "user_profile"
 	// BannerInverseTable is the table name for the Media entity.
 	// It exists in this package in order to avoid circular dependency with the "media" package.
 	BannerInverseTable = "media"
 	// BannerColumn is the table column denoting the banner relation/edge.
-	BannerColumn = "user_profile_banner"
+	BannerColumn = "banner_id"
 )
 
 // Columns holds all SQL columns for userprofile fields.
@@ -52,14 +56,14 @@ var Columns = []string{
 	FieldID,
 	FieldDisplayName,
 	FieldBio,
+	FieldProfilePictureID,
+	FieldBannerID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "user_profile"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"user_account_profile",
-	"user_profile_profile_picture",
-	"user_profile_banner",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -93,6 +97,16 @@ func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
 // ByBio orders the results by the bio field.
 func ByBio(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBio, opts...).ToFunc()
+}
+
+// ByProfilePictureID orders the results by the profile_picture_id field.
+func ByProfilePictureID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProfilePictureID, opts...).ToFunc()
+}
+
+// ByBannerID orders the results by the banner_id field.
+func ByBannerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBannerID, opts...).ToFunc()
 }
 
 // ByAccountField orders the results by account field.

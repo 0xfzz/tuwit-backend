@@ -4,6 +4,7 @@ package threadcount
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -15,8 +16,17 @@ const (
 	FieldReplyCount = "reply_count"
 	// FieldLikeCount holds the string denoting the like_count field in the database.
 	FieldLikeCount = "like_count"
+	// EdgeThread holds the string denoting the thread edge name in mutations.
+	EdgeThread = "thread"
 	// Table holds the table name of the threadcount in the database.
 	Table = "thread_account"
+	// ThreadTable is the table that holds the thread relation/edge.
+	ThreadTable = "thread_account"
+	// ThreadInverseTable is the table name for the Thread entity.
+	// It exists in this package in order to avoid circular dependency with the "thread" package.
+	ThreadInverseTable = "threads"
+	// ThreadColumn is the table column denoting the thread relation/edge.
+	ThreadColumn = "thread_thread_count"
 )
 
 // Columns holds all SQL columns for threadcount fields.
@@ -26,10 +36,21 @@ var Columns = []string{
 	FieldLikeCount,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "thread_account"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"thread_thread_count",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -59,4 +80,18 @@ func ByReplyCount(opts ...sql.OrderTermOption) OrderOption {
 // ByLikeCount orders the results by the like_count field.
 func ByLikeCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLikeCount, opts...).ToFunc()
+}
+
+// ByThreadField orders the results by thread field.
+func ByThreadField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newThreadStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newThreadStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ThreadInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ThreadTable, ThreadColumn),
+	)
 }

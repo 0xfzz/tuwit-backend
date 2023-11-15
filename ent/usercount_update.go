@@ -70,19 +70,15 @@ func (ucu *UserCountUpdate) AddFollowingsCount(i int) *UserCountUpdate {
 	return ucu
 }
 
-// AddUserIDs adds the "user" edge to the UserAccount entity by IDs.
-func (ucu *UserCountUpdate) AddUserIDs(ids ...int) *UserCountUpdate {
-	ucu.mutation.AddUserIDs(ids...)
+// SetUserID sets the "user" edge to the UserAccount entity by ID.
+func (ucu *UserCountUpdate) SetUserID(id int) *UserCountUpdate {
+	ucu.mutation.SetUserID(id)
 	return ucu
 }
 
-// AddUser adds the "user" edges to the UserAccount entity.
-func (ucu *UserCountUpdate) AddUser(u ...*UserAccount) *UserCountUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ucu.AddUserIDs(ids...)
+// SetUser sets the "user" edge to the UserAccount entity.
+func (ucu *UserCountUpdate) SetUser(u *UserAccount) *UserCountUpdate {
+	return ucu.SetUserID(u.ID)
 }
 
 // Mutation returns the UserCountMutation object of the builder.
@@ -90,25 +86,10 @@ func (ucu *UserCountUpdate) Mutation() *UserCountMutation {
 	return ucu.mutation
 }
 
-// ClearUser clears all "user" edges to the UserAccount entity.
+// ClearUser clears the "user" edge to the UserAccount entity.
 func (ucu *UserCountUpdate) ClearUser() *UserCountUpdate {
 	ucu.mutation.ClearUser()
 	return ucu
-}
-
-// RemoveUserIDs removes the "user" edge to UserAccount entities by IDs.
-func (ucu *UserCountUpdate) RemoveUserIDs(ids ...int) *UserCountUpdate {
-	ucu.mutation.RemoveUserIDs(ids...)
-	return ucu
-}
-
-// RemoveUser removes "user" edges to UserAccount entities.
-func (ucu *UserCountUpdate) RemoveUser(u ...*UserAccount) *UserCountUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ucu.RemoveUserIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -138,7 +119,18 @@ func (ucu *UserCountUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ucu *UserCountUpdate) check() error {
+	if _, ok := ucu.mutation.UserID(); ucu.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "UserCount.user"`)
+	}
+	return nil
+}
+
 func (ucu *UserCountUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := ucu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(usercount.Table, usercount.Columns, sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt))
 	if ps := ucu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -161,7 +153,7 @@ func (ucu *UserCountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ucu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   usercount.UserTable,
 			Columns: []string{usercount.UserColumn},
@@ -169,28 +161,12 @@ func (ucu *UserCountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ucu.mutation.RemovedUserIDs(); len(nodes) > 0 && !ucu.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   usercount.UserTable,
-			Columns: []string{usercount.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ucu.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   usercount.UserTable,
 			Columns: []string{usercount.UserColumn},
@@ -266,19 +242,15 @@ func (ucuo *UserCountUpdateOne) AddFollowingsCount(i int) *UserCountUpdateOne {
 	return ucuo
 }
 
-// AddUserIDs adds the "user" edge to the UserAccount entity by IDs.
-func (ucuo *UserCountUpdateOne) AddUserIDs(ids ...int) *UserCountUpdateOne {
-	ucuo.mutation.AddUserIDs(ids...)
+// SetUserID sets the "user" edge to the UserAccount entity by ID.
+func (ucuo *UserCountUpdateOne) SetUserID(id int) *UserCountUpdateOne {
+	ucuo.mutation.SetUserID(id)
 	return ucuo
 }
 
-// AddUser adds the "user" edges to the UserAccount entity.
-func (ucuo *UserCountUpdateOne) AddUser(u ...*UserAccount) *UserCountUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ucuo.AddUserIDs(ids...)
+// SetUser sets the "user" edge to the UserAccount entity.
+func (ucuo *UserCountUpdateOne) SetUser(u *UserAccount) *UserCountUpdateOne {
+	return ucuo.SetUserID(u.ID)
 }
 
 // Mutation returns the UserCountMutation object of the builder.
@@ -286,25 +258,10 @@ func (ucuo *UserCountUpdateOne) Mutation() *UserCountMutation {
 	return ucuo.mutation
 }
 
-// ClearUser clears all "user" edges to the UserAccount entity.
+// ClearUser clears the "user" edge to the UserAccount entity.
 func (ucuo *UserCountUpdateOne) ClearUser() *UserCountUpdateOne {
 	ucuo.mutation.ClearUser()
 	return ucuo
-}
-
-// RemoveUserIDs removes the "user" edge to UserAccount entities by IDs.
-func (ucuo *UserCountUpdateOne) RemoveUserIDs(ids ...int) *UserCountUpdateOne {
-	ucuo.mutation.RemoveUserIDs(ids...)
-	return ucuo
-}
-
-// RemoveUser removes "user" edges to UserAccount entities.
-func (ucuo *UserCountUpdateOne) RemoveUser(u ...*UserAccount) *UserCountUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ucuo.RemoveUserIDs(ids...)
 }
 
 // Where appends a list predicates to the UserCountUpdate builder.
@@ -347,7 +304,18 @@ func (ucuo *UserCountUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ucuo *UserCountUpdateOne) check() error {
+	if _, ok := ucuo.mutation.UserID(); ucuo.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "UserCount.user"`)
+	}
+	return nil
+}
+
 func (ucuo *UserCountUpdateOne) sqlSave(ctx context.Context) (_node *UserCount, err error) {
+	if err := ucuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(usercount.Table, usercount.Columns, sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt))
 	id, ok := ucuo.mutation.ID()
 	if !ok {
@@ -387,7 +355,7 @@ func (ucuo *UserCountUpdateOne) sqlSave(ctx context.Context) (_node *UserCount, 
 	}
 	if ucuo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   usercount.UserTable,
 			Columns: []string{usercount.UserColumn},
@@ -395,28 +363,12 @@ func (ucuo *UserCountUpdateOne) sqlSave(ctx context.Context) (_node *UserCount, 
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ucuo.mutation.RemovedUserIDs(); len(nodes) > 0 && !ucuo.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   usercount.UserTable,
-			Columns: []string{usercount.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ucuo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   usercount.UserTable,
 			Columns: []string{usercount.UserColumn},

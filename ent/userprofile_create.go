@@ -33,6 +33,34 @@ func (upc *UserProfileCreate) SetBio(s string) *UserProfileCreate {
 	return upc
 }
 
+// SetProfilePictureID sets the "profile_picture_id" field.
+func (upc *UserProfileCreate) SetProfilePictureID(i int) *UserProfileCreate {
+	upc.mutation.SetProfilePictureID(i)
+	return upc
+}
+
+// SetNillableProfilePictureID sets the "profile_picture_id" field if the given value is not nil.
+func (upc *UserProfileCreate) SetNillableProfilePictureID(i *int) *UserProfileCreate {
+	if i != nil {
+		upc.SetProfilePictureID(*i)
+	}
+	return upc
+}
+
+// SetBannerID sets the "banner_id" field.
+func (upc *UserProfileCreate) SetBannerID(i int) *UserProfileCreate {
+	upc.mutation.SetBannerID(i)
+	return upc
+}
+
+// SetNillableBannerID sets the "banner_id" field if the given value is not nil.
+func (upc *UserProfileCreate) SetNillableBannerID(i *int) *UserProfileCreate {
+	if i != nil {
+		upc.SetBannerID(*i)
+	}
+	return upc
+}
+
 // SetAccountID sets the "account" edge to the UserAccount entity by ID.
 func (upc *UserProfileCreate) SetAccountID(id int) *UserProfileCreate {
 	upc.mutation.SetAccountID(id)
@@ -44,37 +72,9 @@ func (upc *UserProfileCreate) SetAccount(u *UserAccount) *UserProfileCreate {
 	return upc.SetAccountID(u.ID)
 }
 
-// SetProfilePictureID sets the "profile_picture" edge to the Media entity by ID.
-func (upc *UserProfileCreate) SetProfilePictureID(id int) *UserProfileCreate {
-	upc.mutation.SetProfilePictureID(id)
-	return upc
-}
-
-// SetNillableProfilePictureID sets the "profile_picture" edge to the Media entity by ID if the given value is not nil.
-func (upc *UserProfileCreate) SetNillableProfilePictureID(id *int) *UserProfileCreate {
-	if id != nil {
-		upc = upc.SetProfilePictureID(*id)
-	}
-	return upc
-}
-
 // SetProfilePicture sets the "profile_picture" edge to the Media entity.
 func (upc *UserProfileCreate) SetProfilePicture(m *Media) *UserProfileCreate {
 	return upc.SetProfilePictureID(m.ID)
-}
-
-// SetBannerID sets the "banner" edge to the Media entity by ID.
-func (upc *UserProfileCreate) SetBannerID(id int) *UserProfileCreate {
-	upc.mutation.SetBannerID(id)
-	return upc
-}
-
-// SetNillableBannerID sets the "banner" edge to the Media entity by ID if the given value is not nil.
-func (upc *UserProfileCreate) SetNillableBannerID(id *int) *UserProfileCreate {
-	if id != nil {
-		upc = upc.SetBannerID(*id)
-	}
-	return upc
 }
 
 // SetBanner sets the "banner" edge to the Media entity.
@@ -190,7 +190,7 @@ func (upc *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_profile_profile_picture = &nodes[0]
+		_node.ProfilePictureID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := upc.mutation.BannerIDs(); len(nodes) > 0 {
@@ -207,7 +207,7 @@ func (upc *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_profile_banner = &nodes[0]
+		_node.BannerID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

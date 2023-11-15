@@ -14,19 +14,24 @@ import (
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/predicate"
 	"github.com/0xfzz/tuwitt/ent/thread"
+	"github.com/0xfzz/tuwitt/ent/threadcount"
+	"github.com/0xfzz/tuwitt/ent/useraccount"
 )
 
 // ThreadQuery is the builder for querying Thread entities.
 type ThreadQuery struct {
 	config
-	ctx              *QueryContext
-	order            []thread.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Thread
-	withParentThread *ThreadQuery
-	withChildThreads *ThreadQuery
-	withImages       *MediaQuery
-	withFKs          bool
+	ctx             *QueryContext
+	order           []thread.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Thread
+	withAuthor      *UserAccountQuery
+	withParent      *ThreadQuery
+	withChildren    *ThreadQuery
+	withThreadCount *ThreadCountQuery
+	withReposted    *ThreadQuery
+	withRepost      *ThreadQuery
+	withImages      *MediaQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -63,9 +68,9 @@ func (tq *ThreadQuery) Order(o ...thread.OrderOption) *ThreadQuery {
 	return tq
 }
 
-// QueryParentThread chains the current query on the "parent_thread" edge.
-func (tq *ThreadQuery) QueryParentThread() *ThreadQuery {
-	query := (&ThreadClient{config: tq.config}).Query()
+// QueryAuthor chains the current query on the "author" edge.
+func (tq *ThreadQuery) QueryAuthor() *UserAccountQuery {
+	query := (&UserAccountClient{config: tq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -76,8 +81,8 @@ func (tq *ThreadQuery) QueryParentThread() *ThreadQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread.Table, thread.FieldID, selector),
-			sqlgraph.To(thread.Table, thread.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, thread.ParentThreadTable, thread.ParentThreadColumn),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread.AuthorTable, thread.AuthorColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -85,8 +90,8 @@ func (tq *ThreadQuery) QueryParentThread() *ThreadQuery {
 	return query
 }
 
-// QueryChildThreads chains the current query on the "child_threads" edge.
-func (tq *ThreadQuery) QueryChildThreads() *ThreadQuery {
+// QueryParent chains the current query on the "parent" edge.
+func (tq *ThreadQuery) QueryParent() *ThreadQuery {
 	query := (&ThreadClient{config: tq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -99,7 +104,95 @@ func (tq *ThreadQuery) QueryChildThreads() *ThreadQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread.Table, thread.FieldID, selector),
 			sqlgraph.To(thread.Table, thread.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, thread.ChildThreadsTable, thread.ChildThreadsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread.ParentTable, thread.ParentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryChildren chains the current query on the "children" edge.
+func (tq *ThreadQuery) QueryChildren() *ThreadQuery {
+	query := (&ThreadClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, selector),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, thread.ChildrenTable, thread.ChildrenColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryThreadCount chains the current query on the "thread_count" edge.
+func (tq *ThreadQuery) QueryThreadCount() *ThreadCountQuery {
+	query := (&ThreadCountClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, selector),
+			sqlgraph.To(threadcount.Table, threadcount.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, thread.ThreadCountTable, thread.ThreadCountColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReposted chains the current query on the "reposted" edge.
+func (tq *ThreadQuery) QueryReposted() *ThreadQuery {
+	query := (&ThreadClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, selector),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, thread.RepostedTable, thread.RepostedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRepost chains the current query on the "repost" edge.
+func (tq *ThreadQuery) QueryRepost() *ThreadQuery {
+	query := (&ThreadClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, selector),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, thread.RepostTable, thread.RepostColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -316,39 +409,87 @@ func (tq *ThreadQuery) Clone() *ThreadQuery {
 		return nil
 	}
 	return &ThreadQuery{
-		config:           tq.config,
-		ctx:              tq.ctx.Clone(),
-		order:            append([]thread.OrderOption{}, tq.order...),
-		inters:           append([]Interceptor{}, tq.inters...),
-		predicates:       append([]predicate.Thread{}, tq.predicates...),
-		withParentThread: tq.withParentThread.Clone(),
-		withChildThreads: tq.withChildThreads.Clone(),
-		withImages:       tq.withImages.Clone(),
+		config:          tq.config,
+		ctx:             tq.ctx.Clone(),
+		order:           append([]thread.OrderOption{}, tq.order...),
+		inters:          append([]Interceptor{}, tq.inters...),
+		predicates:      append([]predicate.Thread{}, tq.predicates...),
+		withAuthor:      tq.withAuthor.Clone(),
+		withParent:      tq.withParent.Clone(),
+		withChildren:    tq.withChildren.Clone(),
+		withThreadCount: tq.withThreadCount.Clone(),
+		withReposted:    tq.withReposted.Clone(),
+		withRepost:      tq.withRepost.Clone(),
+		withImages:      tq.withImages.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
 	}
 }
 
-// WithParentThread tells the query-builder to eager-load the nodes that are connected to
-// the "parent_thread" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *ThreadQuery) WithParentThread(opts ...func(*ThreadQuery)) *ThreadQuery {
-	query := (&ThreadClient{config: tq.config}).Query()
+// WithAuthor tells the query-builder to eager-load the nodes that are connected to
+// the "author" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *ThreadQuery) WithAuthor(opts ...func(*UserAccountQuery)) *ThreadQuery {
+	query := (&UserAccountClient{config: tq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withParentThread = query
+	tq.withAuthor = query
 	return tq
 }
 
-// WithChildThreads tells the query-builder to eager-load the nodes that are connected to
-// the "child_threads" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *ThreadQuery) WithChildThreads(opts ...func(*ThreadQuery)) *ThreadQuery {
+// WithParent tells the query-builder to eager-load the nodes that are connected to
+// the "parent" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *ThreadQuery) WithParent(opts ...func(*ThreadQuery)) *ThreadQuery {
 	query := (&ThreadClient{config: tq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withChildThreads = query
+	tq.withParent = query
+	return tq
+}
+
+// WithChildren tells the query-builder to eager-load the nodes that are connected to
+// the "children" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *ThreadQuery) WithChildren(opts ...func(*ThreadQuery)) *ThreadQuery {
+	query := (&ThreadClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withChildren = query
+	return tq
+}
+
+// WithThreadCount tells the query-builder to eager-load the nodes that are connected to
+// the "thread_count" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *ThreadQuery) WithThreadCount(opts ...func(*ThreadCountQuery)) *ThreadQuery {
+	query := (&ThreadCountClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withThreadCount = query
+	return tq
+}
+
+// WithReposted tells the query-builder to eager-load the nodes that are connected to
+// the "reposted" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *ThreadQuery) WithReposted(opts ...func(*ThreadQuery)) *ThreadQuery {
+	query := (&ThreadClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withReposted = query
+	return tq
+}
+
+// WithRepost tells the query-builder to eager-load the nodes that are connected to
+// the "repost" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *ThreadQuery) WithRepost(opts ...func(*ThreadQuery)) *ThreadQuery {
+	query := (&ThreadClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withRepost = query
 	return tq
 }
 
@@ -369,12 +510,12 @@ func (tq *ThreadQuery) WithImages(opts ...func(*MediaQuery)) *ThreadQuery {
 // Example:
 //
 //	var v []struct {
-//		Content string `json:"content,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Thread.Query().
-//		GroupBy(thread.FieldContent).
+//		GroupBy(thread.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (tq *ThreadQuery) GroupBy(field string, fields ...string) *ThreadGroupBy {
@@ -392,11 +533,11 @@ func (tq *ThreadQuery) GroupBy(field string, fields ...string) *ThreadGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Content string `json:"content,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.Thread.Query().
-//		Select(thread.FieldContent).
+//		Select(thread.FieldCreatedAt).
 //		Scan(ctx, &v)
 func (tq *ThreadQuery) Select(fields ...string) *ThreadSelect {
 	tq.ctx.Fields = append(tq.ctx.Fields, fields...)
@@ -440,20 +581,17 @@ func (tq *ThreadQuery) prepareQuery(ctx context.Context) error {
 func (tq *ThreadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Thread, error) {
 	var (
 		nodes       = []*Thread{}
-		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
-			tq.withParentThread != nil,
-			tq.withChildThreads != nil,
+		loadedTypes = [7]bool{
+			tq.withAuthor != nil,
+			tq.withParent != nil,
+			tq.withChildren != nil,
+			tq.withThreadCount != nil,
+			tq.withReposted != nil,
+			tq.withRepost != nil,
 			tq.withImages != nil,
 		}
 	)
-	if tq.withParentThread != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, thread.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Thread).scanValues(nil, columns)
 	}
@@ -472,16 +610,41 @@ func (tq *ThreadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Threa
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := tq.withParentThread; query != nil {
-		if err := tq.loadParentThread(ctx, query, nodes, nil,
-			func(n *Thread, e *Thread) { n.Edges.ParentThread = e }); err != nil {
+	if query := tq.withAuthor; query != nil {
+		if err := tq.loadAuthor(ctx, query, nodes, nil,
+			func(n *Thread, e *UserAccount) { n.Edges.Author = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := tq.withChildThreads; query != nil {
-		if err := tq.loadChildThreads(ctx, query, nodes,
-			func(n *Thread) { n.Edges.ChildThreads = []*Thread{} },
-			func(n *Thread, e *Thread) { n.Edges.ChildThreads = append(n.Edges.ChildThreads, e) }); err != nil {
+	if query := tq.withParent; query != nil {
+		if err := tq.loadParent(ctx, query, nodes, nil,
+			func(n *Thread, e *Thread) { n.Edges.Parent = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withChildren; query != nil {
+		if err := tq.loadChildren(ctx, query, nodes,
+			func(n *Thread) { n.Edges.Children = []*Thread{} },
+			func(n *Thread, e *Thread) { n.Edges.Children = append(n.Edges.Children, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withThreadCount; query != nil {
+		if err := tq.loadThreadCount(ctx, query, nodes,
+			func(n *Thread) { n.Edges.ThreadCount = []*ThreadCount{} },
+			func(n *Thread, e *ThreadCount) { n.Edges.ThreadCount = append(n.Edges.ThreadCount, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withReposted; query != nil {
+		if err := tq.loadReposted(ctx, query, nodes, nil,
+			func(n *Thread, e *Thread) { n.Edges.Reposted = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withRepost; query != nil {
+		if err := tq.loadRepost(ctx, query, nodes, nil,
+			func(n *Thread, e *Thread) { n.Edges.Repost = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -495,14 +658,40 @@ func (tq *ThreadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Threa
 	return nodes, nil
 }
 
-func (tq *ThreadQuery) loadParentThread(ctx context.Context, query *ThreadQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *Thread)) error {
+func (tq *ThreadQuery) loadAuthor(ctx context.Context, query *UserAccountQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *UserAccount)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Thread)
 	for i := range nodes {
-		if nodes[i].thread_child_threads == nil {
-			continue
+		fk := nodes[i].AuthorID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
 		}
-		fk := *nodes[i].thread_child_threads
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(useraccount.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "author_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (tq *ThreadQuery) loadParent(ctx context.Context, query *ThreadQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *Thread)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Thread)
+	for i := range nodes {
+		fk := nodes[i].ParentID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -519,7 +708,7 @@ func (tq *ThreadQuery) loadParentThread(ctx context.Context, query *ThreadQuery,
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "thread_child_threads" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "parent_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -527,7 +716,37 @@ func (tq *ThreadQuery) loadParentThread(ctx context.Context, query *ThreadQuery,
 	}
 	return nil
 }
-func (tq *ThreadQuery) loadChildThreads(ctx context.Context, query *ThreadQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *Thread)) error {
+func (tq *ThreadQuery) loadChildren(ctx context.Context, query *ThreadQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *Thread)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Thread)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(thread.FieldParentID)
+	}
+	query.Where(predicate.Thread(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(thread.ChildrenColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ParentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "parent_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (tq *ThreadQuery) loadThreadCount(ctx context.Context, query *ThreadCountQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *ThreadCount)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Thread)
 	for i := range nodes {
@@ -538,21 +757,77 @@ func (tq *ThreadQuery) loadChildThreads(ctx context.Context, query *ThreadQuery,
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Thread(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(thread.ChildThreadsColumn), fks...))
+	query.Where(predicate.ThreadCount(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(thread.ThreadCountColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.thread_child_threads
+		fk := n.thread_thread_count
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "thread_child_threads" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "thread_thread_count" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "thread_child_threads" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "thread_thread_count" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (tq *ThreadQuery) loadReposted(ctx context.Context, query *ThreadQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *Thread)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Thread)
+	for i := range nodes {
+		fk := nodes[i].RepostThreadID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(thread.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "repost_thread_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (tq *ThreadQuery) loadRepost(ctx context.Context, query *ThreadQuery, nodes []*Thread, init func(*Thread), assign func(*Thread, *Thread)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Thread)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(thread.FieldRepostThreadID)
+	}
+	query.Where(predicate.Thread(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(thread.RepostColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.RepostThreadID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "repost_thread_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -644,6 +919,15 @@ func (tq *ThreadQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != thread.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if tq.withAuthor != nil {
+			_spec.Node.AddColumnOnce(thread.FieldAuthorID)
+		}
+		if tq.withParent != nil {
+			_spec.Node.AddColumnOnce(thread.FieldParentID)
+		}
+		if tq.withReposted != nil {
+			_spec.Node.AddColumnOnce(thread.FieldRepostThreadID)
 		}
 	}
 	if ps := tq.predicates; len(ps) > 0 {

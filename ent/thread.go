@@ -5,10 +5,12 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/0xfzz/tuwitt/ent/thread"
+	"github.com/0xfzz/tuwitt/ent/useraccount"
 )
 
 // Thread is the model entity for the Thread schema.
@@ -16,6 +18,10 @@ type Thread struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Content holds the value of the "content" field.
 	Content string `json:"content,omitempty"`
 	// IsCommentDisabled holds the value of the "is_comment_disabled" field.
@@ -26,52 +32,113 @@ type Thread struct {
 	Status thread.Status `json:"status,omitempty"`
 	// IsDeleted holds the value of the "is_deleted" field.
 	IsDeleted bool `json:"is_deleted,omitempty"`
+	// AuthorID holds the value of the "author_id" field.
+	AuthorID int `json:"author_id,omitempty"`
+	// ParentID holds the value of the "parent_id" field.
+	ParentID int `json:"parent_id,omitempty"`
+	// RepostThreadID holds the value of the "repost_thread_id" field.
+	RepostThreadID int `json:"repost_thread_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ThreadQuery when eager-loading is set.
-	Edges                ThreadEdges `json:"edges"`
-	thread_child_threads *int
-	selectValues         sql.SelectValues
+	Edges        ThreadEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ThreadEdges holds the relations/edges for other nodes in the graph.
 type ThreadEdges struct {
-	// ParentThread holds the value of the parent_thread edge.
-	ParentThread *Thread `json:"parent_thread,omitempty"`
-	// ChildThreads holds the value of the child_threads edge.
-	ChildThreads []*Thread `json:"child_threads,omitempty"`
+	// Author holds the value of the author edge.
+	Author *UserAccount `json:"author,omitempty"`
+	// Parent holds the value of the parent edge.
+	Parent *Thread `json:"parent,omitempty"`
+	// Children holds the value of the children edge.
+	Children []*Thread `json:"children,omitempty"`
+	// ThreadCount holds the value of the thread_count edge.
+	ThreadCount []*ThreadCount `json:"thread_count,omitempty"`
+	// Reposted holds the value of the reposted edge.
+	Reposted *Thread `json:"reposted,omitempty"`
+	// Repost holds the value of the repost edge.
+	Repost *Thread `json:"repost,omitempty"`
 	// Images holds the value of the images edge.
 	Images []*Media `json:"images,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [7]bool
 }
 
-// ParentThreadOrErr returns the ParentThread value or an error if the edge
+// AuthorOrErr returns the Author value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ThreadEdges) ParentThreadOrErr() (*Thread, error) {
+func (e ThreadEdges) AuthorOrErr() (*UserAccount, error) {
 	if e.loadedTypes[0] {
-		if e.ParentThread == nil {
+		if e.Author == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: useraccount.Label}
+		}
+		return e.Author, nil
+	}
+	return nil, &NotLoadedError{edge: "author"}
+}
+
+// ParentOrErr returns the Parent value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ThreadEdges) ParentOrErr() (*Thread, error) {
+	if e.loadedTypes[1] {
+		if e.Parent == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: thread.Label}
 		}
-		return e.ParentThread, nil
+		return e.Parent, nil
 	}
-	return nil, &NotLoadedError{edge: "parent_thread"}
+	return nil, &NotLoadedError{edge: "parent"}
 }
 
-// ChildThreadsOrErr returns the ChildThreads value or an error if the edge
+// ChildrenOrErr returns the Children value or an error if the edge
 // was not loaded in eager-loading.
-func (e ThreadEdges) ChildThreadsOrErr() ([]*Thread, error) {
-	if e.loadedTypes[1] {
-		return e.ChildThreads, nil
+func (e ThreadEdges) ChildrenOrErr() ([]*Thread, error) {
+	if e.loadedTypes[2] {
+		return e.Children, nil
 	}
-	return nil, &NotLoadedError{edge: "child_threads"}
+	return nil, &NotLoadedError{edge: "children"}
+}
+
+// ThreadCountOrErr returns the ThreadCount value or an error if the edge
+// was not loaded in eager-loading.
+func (e ThreadEdges) ThreadCountOrErr() ([]*ThreadCount, error) {
+	if e.loadedTypes[3] {
+		return e.ThreadCount, nil
+	}
+	return nil, &NotLoadedError{edge: "thread_count"}
+}
+
+// RepostedOrErr returns the Reposted value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ThreadEdges) RepostedOrErr() (*Thread, error) {
+	if e.loadedTypes[4] {
+		if e.Reposted == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: thread.Label}
+		}
+		return e.Reposted, nil
+	}
+	return nil, &NotLoadedError{edge: "reposted"}
+}
+
+// RepostOrErr returns the Repost value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ThreadEdges) RepostOrErr() (*Thread, error) {
+	if e.loadedTypes[5] {
+		if e.Repost == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: thread.Label}
+		}
+		return e.Repost, nil
+	}
+	return nil, &NotLoadedError{edge: "repost"}
 }
 
 // ImagesOrErr returns the Images value or an error if the edge
 // was not loaded in eager-loading.
 func (e ThreadEdges) ImagesOrErr() ([]*Media, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[6] {
 		return e.Images, nil
 	}
 	return nil, &NotLoadedError{edge: "images"}
@@ -84,12 +151,12 @@ func (*Thread) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case thread.FieldIsCommentDisabled, thread.FieldIsDeleted:
 			values[i] = new(sql.NullBool)
-		case thread.FieldID:
+		case thread.FieldID, thread.FieldAuthorID, thread.FieldParentID, thread.FieldRepostThreadID:
 			values[i] = new(sql.NullInt64)
 		case thread.FieldContent, thread.FieldVisibility, thread.FieldStatus:
 			values[i] = new(sql.NullString)
-		case thread.ForeignKeys[0]: // thread_child_threads
-			values[i] = new(sql.NullInt64)
+		case thread.FieldCreatedAt, thread.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -111,6 +178,18 @@ func (t *Thread) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			t.ID = int(value.Int64)
+		case thread.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				t.CreatedAt = value.Time
+			}
+		case thread.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				t.UpdatedAt = value.Time
+			}
 		case thread.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
@@ -141,12 +220,23 @@ func (t *Thread) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.IsDeleted = value.Bool
 			}
-		case thread.ForeignKeys[0]:
+		case thread.FieldAuthorID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field thread_child_threads", value)
+				return fmt.Errorf("unexpected type %T for field author_id", values[i])
 			} else if value.Valid {
-				t.thread_child_threads = new(int)
-				*t.thread_child_threads = int(value.Int64)
+				t.AuthorID = int(value.Int64)
+			}
+		case thread.FieldParentID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
+			} else if value.Valid {
+				t.ParentID = int(value.Int64)
+			}
+		case thread.FieldRepostThreadID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field repost_thread_id", values[i])
+			} else if value.Valid {
+				t.RepostThreadID = int(value.Int64)
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -161,14 +251,34 @@ func (t *Thread) Value(name string) (ent.Value, error) {
 	return t.selectValues.Get(name)
 }
 
-// QueryParentThread queries the "parent_thread" edge of the Thread entity.
-func (t *Thread) QueryParentThread() *ThreadQuery {
-	return NewThreadClient(t.config).QueryParentThread(t)
+// QueryAuthor queries the "author" edge of the Thread entity.
+func (t *Thread) QueryAuthor() *UserAccountQuery {
+	return NewThreadClient(t.config).QueryAuthor(t)
 }
 
-// QueryChildThreads queries the "child_threads" edge of the Thread entity.
-func (t *Thread) QueryChildThreads() *ThreadQuery {
-	return NewThreadClient(t.config).QueryChildThreads(t)
+// QueryParent queries the "parent" edge of the Thread entity.
+func (t *Thread) QueryParent() *ThreadQuery {
+	return NewThreadClient(t.config).QueryParent(t)
+}
+
+// QueryChildren queries the "children" edge of the Thread entity.
+func (t *Thread) QueryChildren() *ThreadQuery {
+	return NewThreadClient(t.config).QueryChildren(t)
+}
+
+// QueryThreadCount queries the "thread_count" edge of the Thread entity.
+func (t *Thread) QueryThreadCount() *ThreadCountQuery {
+	return NewThreadClient(t.config).QueryThreadCount(t)
+}
+
+// QueryReposted queries the "reposted" edge of the Thread entity.
+func (t *Thread) QueryReposted() *ThreadQuery {
+	return NewThreadClient(t.config).QueryReposted(t)
+}
+
+// QueryRepost queries the "repost" edge of the Thread entity.
+func (t *Thread) QueryRepost() *ThreadQuery {
+	return NewThreadClient(t.config).QueryRepost(t)
 }
 
 // QueryImages queries the "images" edge of the Thread entity.
@@ -199,6 +309,12 @@ func (t *Thread) String() string {
 	var builder strings.Builder
 	builder.WriteString("Thread(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
+	builder.WriteString("created_at=")
+	builder.WriteString(t.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(t.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("content=")
 	builder.WriteString(t.Content)
 	builder.WriteString(", ")
@@ -213,6 +329,15 @@ func (t *Thread) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_deleted=")
 	builder.WriteString(fmt.Sprintf("%v", t.IsDeleted))
+	builder.WriteString(", ")
+	builder.WriteString("author_id=")
+	builder.WriteString(fmt.Sprintf("%v", t.AuthorID))
+	builder.WriteString(", ")
+	builder.WriteString("parent_id=")
+	builder.WriteString(fmt.Sprintf("%v", t.ParentID))
+	builder.WriteString(", ")
+	builder.WriteString("repost_thread_id=")
+	builder.WriteString(fmt.Sprintf("%v", t.RepostThreadID))
 	builder.WriteByte(')')
 	return builder.String()
 }

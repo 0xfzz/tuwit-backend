@@ -10,9 +10,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
 	"github.com/0xfzz/tuwitt/ent/predicate"
+	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
+	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -108,14 +111,14 @@ func (uau *UserAccountUpdate) SetProfile(u *UserProfile) *UserAccountUpdate {
 	return uau.SetProfileID(u.ID)
 }
 
-// AddFollowerIDs adds the "followers" edge to the UserAccount entity by IDs.
+// AddFollowerIDs adds the "followers" edge to the UserFollowerRelationship entity by IDs.
 func (uau *UserAccountUpdate) AddFollowerIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.AddFollowerIDs(ids...)
 	return uau
 }
 
-// AddFollowers adds the "followers" edges to the UserAccount entity.
-func (uau *UserAccountUpdate) AddFollowers(u ...*UserAccount) *UserAccountUpdate {
+// AddFollowers adds the "followers" edges to the UserFollowerRelationship entity.
+func (uau *UserAccountUpdate) AddFollowers(u ...*UserFollowerRelationship) *UserAccountUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -123,14 +126,14 @@ func (uau *UserAccountUpdate) AddFollowers(u ...*UserAccount) *UserAccountUpdate
 	return uau.AddFollowerIDs(ids...)
 }
 
-// AddFollowingIDs adds the "following" edge to the UserAccount entity by IDs.
+// AddFollowingIDs adds the "followings" edge to the UserFollowerRelationship entity by IDs.
 func (uau *UserAccountUpdate) AddFollowingIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.AddFollowingIDs(ids...)
 	return uau
 }
 
-// AddFollowing adds the "following" edges to the UserAccount entity.
-func (uau *UserAccountUpdate) AddFollowing(u ...*UserAccount) *UserAccountUpdate {
+// AddFollowings adds the "followings" edges to the UserFollowerRelationship entity.
+func (uau *UserAccountUpdate) AddFollowings(u ...*UserFollowerRelationship) *UserAccountUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -138,53 +141,68 @@ func (uau *UserAccountUpdate) AddFollowing(u ...*UserAccount) *UserAccountUpdate
 	return uau.AddFollowingIDs(ids...)
 }
 
-// AddBlockedByIDs adds the "blocked_by" edge to the UserAccount entity by IDs.
+// AddBlockedByIDs adds the "blocked_by" edge to the BlockedUsersRelationship entity by IDs.
 func (uau *UserAccountUpdate) AddBlockedByIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.AddBlockedByIDs(ids...)
 	return uau
 }
 
-// AddBlockedBy adds the "blocked_by" edges to the UserAccount entity.
-func (uau *UserAccountUpdate) AddBlockedBy(u ...*UserAccount) *UserAccountUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddBlockedBy adds the "blocked_by" edges to the BlockedUsersRelationship entity.
+func (uau *UserAccountUpdate) AddBlockedBy(b ...*BlockedUsersRelationship) *UserAccountUpdate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uau.AddBlockedByIDs(ids...)
 }
 
-// AddBlockedUserIDs adds the "blocked_user" edge to the UserAccount entity by IDs.
+// AddBlockedUserIDs adds the "blocked_users" edge to the BlockedUsersRelationship entity by IDs.
 func (uau *UserAccountUpdate) AddBlockedUserIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.AddBlockedUserIDs(ids...)
 	return uau
 }
 
-// AddBlockedUser adds the "blocked_user" edges to the UserAccount entity.
-func (uau *UserAccountUpdate) AddBlockedUser(u ...*UserAccount) *UserAccountUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddBlockedUsers adds the "blocked_users" edges to the BlockedUsersRelationship entity.
+func (uau *UserAccountUpdate) AddBlockedUsers(b ...*BlockedUsersRelationship) *UserAccountUpdate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uau.AddBlockedUserIDs(ids...)
 }
 
-// SetUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID.
-func (uau *UserAccountUpdate) SetUserCountInfoID(id int) *UserAccountUpdate {
-	uau.mutation.SetUserCountInfoID(id)
+// SetUserCountID sets the "user_count" edge to the UserCount entity by ID.
+func (uau *UserAccountUpdate) SetUserCountID(id int) *UserAccountUpdate {
+	uau.mutation.SetUserCountID(id)
 	return uau
 }
 
-// SetNillableUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID if the given value is not nil.
-func (uau *UserAccountUpdate) SetNillableUserCountInfoID(id *int) *UserAccountUpdate {
+// SetNillableUserCountID sets the "user_count" edge to the UserCount entity by ID if the given value is not nil.
+func (uau *UserAccountUpdate) SetNillableUserCountID(id *int) *UserAccountUpdate {
 	if id != nil {
-		uau = uau.SetUserCountInfoID(*id)
+		uau = uau.SetUserCountID(*id)
 	}
 	return uau
 }
 
-// SetUserCountInfo sets the "user_count_info" edge to the UserCount entity.
-func (uau *UserAccountUpdate) SetUserCountInfo(u *UserCount) *UserAccountUpdate {
-	return uau.SetUserCountInfoID(u.ID)
+// SetUserCount sets the "user_count" edge to the UserCount entity.
+func (uau *UserAccountUpdate) SetUserCount(u *UserCount) *UserAccountUpdate {
+	return uau.SetUserCountID(u.ID)
+}
+
+// AddThreadIDs adds the "threads" edge to the Thread entity by IDs.
+func (uau *UserAccountUpdate) AddThreadIDs(ids ...int) *UserAccountUpdate {
+	uau.mutation.AddThreadIDs(ids...)
+	return uau
+}
+
+// AddThreads adds the "threads" edges to the Thread entity.
+func (uau *UserAccountUpdate) AddThreads(t ...*Thread) *UserAccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uau.AddThreadIDs(ids...)
 }
 
 // Mutation returns the UserAccountMutation object of the builder.
@@ -198,20 +216,20 @@ func (uau *UserAccountUpdate) ClearProfile() *UserAccountUpdate {
 	return uau
 }
 
-// ClearFollowers clears all "followers" edges to the UserAccount entity.
+// ClearFollowers clears all "followers" edges to the UserFollowerRelationship entity.
 func (uau *UserAccountUpdate) ClearFollowers() *UserAccountUpdate {
 	uau.mutation.ClearFollowers()
 	return uau
 }
 
-// RemoveFollowerIDs removes the "followers" edge to UserAccount entities by IDs.
+// RemoveFollowerIDs removes the "followers" edge to UserFollowerRelationship entities by IDs.
 func (uau *UserAccountUpdate) RemoveFollowerIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.RemoveFollowerIDs(ids...)
 	return uau
 }
 
-// RemoveFollowers removes "followers" edges to UserAccount entities.
-func (uau *UserAccountUpdate) RemoveFollowers(u ...*UserAccount) *UserAccountUpdate {
+// RemoveFollowers removes "followers" edges to UserFollowerRelationship entities.
+func (uau *UserAccountUpdate) RemoveFollowers(u ...*UserFollowerRelationship) *UserAccountUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -219,20 +237,20 @@ func (uau *UserAccountUpdate) RemoveFollowers(u ...*UserAccount) *UserAccountUpd
 	return uau.RemoveFollowerIDs(ids...)
 }
 
-// ClearFollowing clears all "following" edges to the UserAccount entity.
-func (uau *UserAccountUpdate) ClearFollowing() *UserAccountUpdate {
-	uau.mutation.ClearFollowing()
+// ClearFollowings clears all "followings" edges to the UserFollowerRelationship entity.
+func (uau *UserAccountUpdate) ClearFollowings() *UserAccountUpdate {
+	uau.mutation.ClearFollowings()
 	return uau
 }
 
-// RemoveFollowingIDs removes the "following" edge to UserAccount entities by IDs.
+// RemoveFollowingIDs removes the "followings" edge to UserFollowerRelationship entities by IDs.
 func (uau *UserAccountUpdate) RemoveFollowingIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.RemoveFollowingIDs(ids...)
 	return uau
 }
 
-// RemoveFollowing removes "following" edges to UserAccount entities.
-func (uau *UserAccountUpdate) RemoveFollowing(u ...*UserAccount) *UserAccountUpdate {
+// RemoveFollowings removes "followings" edges to UserFollowerRelationship entities.
+func (uau *UserAccountUpdate) RemoveFollowings(u ...*UserFollowerRelationship) *UserAccountUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -240,52 +258,73 @@ func (uau *UserAccountUpdate) RemoveFollowing(u ...*UserAccount) *UserAccountUpd
 	return uau.RemoveFollowingIDs(ids...)
 }
 
-// ClearBlockedBy clears all "blocked_by" edges to the UserAccount entity.
+// ClearBlockedBy clears all "blocked_by" edges to the BlockedUsersRelationship entity.
 func (uau *UserAccountUpdate) ClearBlockedBy() *UserAccountUpdate {
 	uau.mutation.ClearBlockedBy()
 	return uau
 }
 
-// RemoveBlockedByIDs removes the "blocked_by" edge to UserAccount entities by IDs.
+// RemoveBlockedByIDs removes the "blocked_by" edge to BlockedUsersRelationship entities by IDs.
 func (uau *UserAccountUpdate) RemoveBlockedByIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.RemoveBlockedByIDs(ids...)
 	return uau
 }
 
-// RemoveBlockedBy removes "blocked_by" edges to UserAccount entities.
-func (uau *UserAccountUpdate) RemoveBlockedBy(u ...*UserAccount) *UserAccountUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// RemoveBlockedBy removes "blocked_by" edges to BlockedUsersRelationship entities.
+func (uau *UserAccountUpdate) RemoveBlockedBy(b ...*BlockedUsersRelationship) *UserAccountUpdate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uau.RemoveBlockedByIDs(ids...)
 }
 
-// ClearBlockedUser clears all "blocked_user" edges to the UserAccount entity.
-func (uau *UserAccountUpdate) ClearBlockedUser() *UserAccountUpdate {
-	uau.mutation.ClearBlockedUser()
+// ClearBlockedUsers clears all "blocked_users" edges to the BlockedUsersRelationship entity.
+func (uau *UserAccountUpdate) ClearBlockedUsers() *UserAccountUpdate {
+	uau.mutation.ClearBlockedUsers()
 	return uau
 }
 
-// RemoveBlockedUserIDs removes the "blocked_user" edge to UserAccount entities by IDs.
+// RemoveBlockedUserIDs removes the "blocked_users" edge to BlockedUsersRelationship entities by IDs.
 func (uau *UserAccountUpdate) RemoveBlockedUserIDs(ids ...int) *UserAccountUpdate {
 	uau.mutation.RemoveBlockedUserIDs(ids...)
 	return uau
 }
 
-// RemoveBlockedUser removes "blocked_user" edges to UserAccount entities.
-func (uau *UserAccountUpdate) RemoveBlockedUser(u ...*UserAccount) *UserAccountUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// RemoveBlockedUsers removes "blocked_users" edges to BlockedUsersRelationship entities.
+func (uau *UserAccountUpdate) RemoveBlockedUsers(b ...*BlockedUsersRelationship) *UserAccountUpdate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uau.RemoveBlockedUserIDs(ids...)
 }
 
-// ClearUserCountInfo clears the "user_count_info" edge to the UserCount entity.
-func (uau *UserAccountUpdate) ClearUserCountInfo() *UserAccountUpdate {
-	uau.mutation.ClearUserCountInfo()
+// ClearUserCount clears the "user_count" edge to the UserCount entity.
+func (uau *UserAccountUpdate) ClearUserCount() *UserAccountUpdate {
+	uau.mutation.ClearUserCount()
 	return uau
+}
+
+// ClearThreads clears all "threads" edges to the Thread entity.
+func (uau *UserAccountUpdate) ClearThreads() *UserAccountUpdate {
+	uau.mutation.ClearThreads()
+	return uau
+}
+
+// RemoveThreadIDs removes the "threads" edge to Thread entities by IDs.
+func (uau *UserAccountUpdate) RemoveThreadIDs(ids ...int) *UserAccountUpdate {
+	uau.mutation.RemoveThreadIDs(ids...)
+	return uau
+}
+
+// RemoveThreads removes "threads" edges to Thread entities.
+func (uau *UserAccountUpdate) RemoveThreads(t ...*Thread) *UserAccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uau.RemoveThreadIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -373,26 +412,26 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uau.mutation.FollowersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := uau.mutation.RemovedFollowersIDs(); len(nodes) > 0 && !uau.mutation.FollowersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -402,13 +441,13 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uau.mutation.FollowersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -416,28 +455,28 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uau.mutation.FollowingCleared() {
+	if uau.mutation.FollowingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uau.mutation.RemovedFollowingIDs(); len(nodes) > 0 && !uau.mutation.FollowingCleared() {
+	if nodes := uau.mutation.RemovedFollowingsIDs(); len(nodes) > 0 && !uau.mutation.FollowingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -445,15 +484,15 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uau.mutation.FollowingIDs(); len(nodes) > 0 {
+	if nodes := uau.mutation.FollowingsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -463,26 +502,26 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uau.mutation.BlockedByCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := uau.mutation.RemovedBlockedByIDs(); len(nodes) > 0 && !uau.mutation.BlockedByCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -492,13 +531,13 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uau.mutation.BlockedByIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -506,28 +545,28 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uau.mutation.BlockedUserCleared() {
+	if uau.mutation.BlockedUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uau.mutation.RemovedBlockedUserIDs(); len(nodes) > 0 && !uau.mutation.BlockedUserCleared() {
+	if nodes := uau.mutation.RemovedBlockedUsersIDs(); len(nodes) > 0 && !uau.mutation.BlockedUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -535,15 +574,15 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uau.mutation.BlockedUserIDs(); len(nodes) > 0 {
+	if nodes := uau.mutation.BlockedUsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -551,12 +590,12 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uau.mutation.UserCountInfoCleared() {
+	if uau.mutation.UserCountCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   useraccount.UserCountInfoTable,
-			Columns: []string{useraccount.UserCountInfoColumn},
+			Table:   useraccount.UserCountTable,
+			Columns: []string{useraccount.UserCountColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt),
@@ -564,15 +603,60 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uau.mutation.UserCountInfoIDs(); len(nodes) > 0 {
+	if nodes := uau.mutation.UserCountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   useraccount.UserCountInfoTable,
-			Columns: []string{useraccount.UserCountInfoColumn},
+			Table:   useraccount.UserCountTable,
+			Columns: []string{useraccount.UserCountColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uau.mutation.ThreadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uau.mutation.RemovedThreadsIDs(); len(nodes) > 0 && !uau.mutation.ThreadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uau.mutation.ThreadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -679,14 +763,14 @@ func (uauo *UserAccountUpdateOne) SetProfile(u *UserProfile) *UserAccountUpdateO
 	return uauo.SetProfileID(u.ID)
 }
 
-// AddFollowerIDs adds the "followers" edge to the UserAccount entity by IDs.
+// AddFollowerIDs adds the "followers" edge to the UserFollowerRelationship entity by IDs.
 func (uauo *UserAccountUpdateOne) AddFollowerIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.AddFollowerIDs(ids...)
 	return uauo
 }
 
-// AddFollowers adds the "followers" edges to the UserAccount entity.
-func (uauo *UserAccountUpdateOne) AddFollowers(u ...*UserAccount) *UserAccountUpdateOne {
+// AddFollowers adds the "followers" edges to the UserFollowerRelationship entity.
+func (uauo *UserAccountUpdateOne) AddFollowers(u ...*UserFollowerRelationship) *UserAccountUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -694,14 +778,14 @@ func (uauo *UserAccountUpdateOne) AddFollowers(u ...*UserAccount) *UserAccountUp
 	return uauo.AddFollowerIDs(ids...)
 }
 
-// AddFollowingIDs adds the "following" edge to the UserAccount entity by IDs.
+// AddFollowingIDs adds the "followings" edge to the UserFollowerRelationship entity by IDs.
 func (uauo *UserAccountUpdateOne) AddFollowingIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.AddFollowingIDs(ids...)
 	return uauo
 }
 
-// AddFollowing adds the "following" edges to the UserAccount entity.
-func (uauo *UserAccountUpdateOne) AddFollowing(u ...*UserAccount) *UserAccountUpdateOne {
+// AddFollowings adds the "followings" edges to the UserFollowerRelationship entity.
+func (uauo *UserAccountUpdateOne) AddFollowings(u ...*UserFollowerRelationship) *UserAccountUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -709,53 +793,68 @@ func (uauo *UserAccountUpdateOne) AddFollowing(u ...*UserAccount) *UserAccountUp
 	return uauo.AddFollowingIDs(ids...)
 }
 
-// AddBlockedByIDs adds the "blocked_by" edge to the UserAccount entity by IDs.
+// AddBlockedByIDs adds the "blocked_by" edge to the BlockedUsersRelationship entity by IDs.
 func (uauo *UserAccountUpdateOne) AddBlockedByIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.AddBlockedByIDs(ids...)
 	return uauo
 }
 
-// AddBlockedBy adds the "blocked_by" edges to the UserAccount entity.
-func (uauo *UserAccountUpdateOne) AddBlockedBy(u ...*UserAccount) *UserAccountUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddBlockedBy adds the "blocked_by" edges to the BlockedUsersRelationship entity.
+func (uauo *UserAccountUpdateOne) AddBlockedBy(b ...*BlockedUsersRelationship) *UserAccountUpdateOne {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uauo.AddBlockedByIDs(ids...)
 }
 
-// AddBlockedUserIDs adds the "blocked_user" edge to the UserAccount entity by IDs.
+// AddBlockedUserIDs adds the "blocked_users" edge to the BlockedUsersRelationship entity by IDs.
 func (uauo *UserAccountUpdateOne) AddBlockedUserIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.AddBlockedUserIDs(ids...)
 	return uauo
 }
 
-// AddBlockedUser adds the "blocked_user" edges to the UserAccount entity.
-func (uauo *UserAccountUpdateOne) AddBlockedUser(u ...*UserAccount) *UserAccountUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddBlockedUsers adds the "blocked_users" edges to the BlockedUsersRelationship entity.
+func (uauo *UserAccountUpdateOne) AddBlockedUsers(b ...*BlockedUsersRelationship) *UserAccountUpdateOne {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uauo.AddBlockedUserIDs(ids...)
 }
 
-// SetUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID.
-func (uauo *UserAccountUpdateOne) SetUserCountInfoID(id int) *UserAccountUpdateOne {
-	uauo.mutation.SetUserCountInfoID(id)
+// SetUserCountID sets the "user_count" edge to the UserCount entity by ID.
+func (uauo *UserAccountUpdateOne) SetUserCountID(id int) *UserAccountUpdateOne {
+	uauo.mutation.SetUserCountID(id)
 	return uauo
 }
 
-// SetNillableUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID if the given value is not nil.
-func (uauo *UserAccountUpdateOne) SetNillableUserCountInfoID(id *int) *UserAccountUpdateOne {
+// SetNillableUserCountID sets the "user_count" edge to the UserCount entity by ID if the given value is not nil.
+func (uauo *UserAccountUpdateOne) SetNillableUserCountID(id *int) *UserAccountUpdateOne {
 	if id != nil {
-		uauo = uauo.SetUserCountInfoID(*id)
+		uauo = uauo.SetUserCountID(*id)
 	}
 	return uauo
 }
 
-// SetUserCountInfo sets the "user_count_info" edge to the UserCount entity.
-func (uauo *UserAccountUpdateOne) SetUserCountInfo(u *UserCount) *UserAccountUpdateOne {
-	return uauo.SetUserCountInfoID(u.ID)
+// SetUserCount sets the "user_count" edge to the UserCount entity.
+func (uauo *UserAccountUpdateOne) SetUserCount(u *UserCount) *UserAccountUpdateOne {
+	return uauo.SetUserCountID(u.ID)
+}
+
+// AddThreadIDs adds the "threads" edge to the Thread entity by IDs.
+func (uauo *UserAccountUpdateOne) AddThreadIDs(ids ...int) *UserAccountUpdateOne {
+	uauo.mutation.AddThreadIDs(ids...)
+	return uauo
+}
+
+// AddThreads adds the "threads" edges to the Thread entity.
+func (uauo *UserAccountUpdateOne) AddThreads(t ...*Thread) *UserAccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uauo.AddThreadIDs(ids...)
 }
 
 // Mutation returns the UserAccountMutation object of the builder.
@@ -769,20 +868,20 @@ func (uauo *UserAccountUpdateOne) ClearProfile() *UserAccountUpdateOne {
 	return uauo
 }
 
-// ClearFollowers clears all "followers" edges to the UserAccount entity.
+// ClearFollowers clears all "followers" edges to the UserFollowerRelationship entity.
 func (uauo *UserAccountUpdateOne) ClearFollowers() *UserAccountUpdateOne {
 	uauo.mutation.ClearFollowers()
 	return uauo
 }
 
-// RemoveFollowerIDs removes the "followers" edge to UserAccount entities by IDs.
+// RemoveFollowerIDs removes the "followers" edge to UserFollowerRelationship entities by IDs.
 func (uauo *UserAccountUpdateOne) RemoveFollowerIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.RemoveFollowerIDs(ids...)
 	return uauo
 }
 
-// RemoveFollowers removes "followers" edges to UserAccount entities.
-func (uauo *UserAccountUpdateOne) RemoveFollowers(u ...*UserAccount) *UserAccountUpdateOne {
+// RemoveFollowers removes "followers" edges to UserFollowerRelationship entities.
+func (uauo *UserAccountUpdateOne) RemoveFollowers(u ...*UserFollowerRelationship) *UserAccountUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -790,20 +889,20 @@ func (uauo *UserAccountUpdateOne) RemoveFollowers(u ...*UserAccount) *UserAccoun
 	return uauo.RemoveFollowerIDs(ids...)
 }
 
-// ClearFollowing clears all "following" edges to the UserAccount entity.
-func (uauo *UserAccountUpdateOne) ClearFollowing() *UserAccountUpdateOne {
-	uauo.mutation.ClearFollowing()
+// ClearFollowings clears all "followings" edges to the UserFollowerRelationship entity.
+func (uauo *UserAccountUpdateOne) ClearFollowings() *UserAccountUpdateOne {
+	uauo.mutation.ClearFollowings()
 	return uauo
 }
 
-// RemoveFollowingIDs removes the "following" edge to UserAccount entities by IDs.
+// RemoveFollowingIDs removes the "followings" edge to UserFollowerRelationship entities by IDs.
 func (uauo *UserAccountUpdateOne) RemoveFollowingIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.RemoveFollowingIDs(ids...)
 	return uauo
 }
 
-// RemoveFollowing removes "following" edges to UserAccount entities.
-func (uauo *UserAccountUpdateOne) RemoveFollowing(u ...*UserAccount) *UserAccountUpdateOne {
+// RemoveFollowings removes "followings" edges to UserFollowerRelationship entities.
+func (uauo *UserAccountUpdateOne) RemoveFollowings(u ...*UserFollowerRelationship) *UserAccountUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -811,52 +910,73 @@ func (uauo *UserAccountUpdateOne) RemoveFollowing(u ...*UserAccount) *UserAccoun
 	return uauo.RemoveFollowingIDs(ids...)
 }
 
-// ClearBlockedBy clears all "blocked_by" edges to the UserAccount entity.
+// ClearBlockedBy clears all "blocked_by" edges to the BlockedUsersRelationship entity.
 func (uauo *UserAccountUpdateOne) ClearBlockedBy() *UserAccountUpdateOne {
 	uauo.mutation.ClearBlockedBy()
 	return uauo
 }
 
-// RemoveBlockedByIDs removes the "blocked_by" edge to UserAccount entities by IDs.
+// RemoveBlockedByIDs removes the "blocked_by" edge to BlockedUsersRelationship entities by IDs.
 func (uauo *UserAccountUpdateOne) RemoveBlockedByIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.RemoveBlockedByIDs(ids...)
 	return uauo
 }
 
-// RemoveBlockedBy removes "blocked_by" edges to UserAccount entities.
-func (uauo *UserAccountUpdateOne) RemoveBlockedBy(u ...*UserAccount) *UserAccountUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// RemoveBlockedBy removes "blocked_by" edges to BlockedUsersRelationship entities.
+func (uauo *UserAccountUpdateOne) RemoveBlockedBy(b ...*BlockedUsersRelationship) *UserAccountUpdateOne {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uauo.RemoveBlockedByIDs(ids...)
 }
 
-// ClearBlockedUser clears all "blocked_user" edges to the UserAccount entity.
-func (uauo *UserAccountUpdateOne) ClearBlockedUser() *UserAccountUpdateOne {
-	uauo.mutation.ClearBlockedUser()
+// ClearBlockedUsers clears all "blocked_users" edges to the BlockedUsersRelationship entity.
+func (uauo *UserAccountUpdateOne) ClearBlockedUsers() *UserAccountUpdateOne {
+	uauo.mutation.ClearBlockedUsers()
 	return uauo
 }
 
-// RemoveBlockedUserIDs removes the "blocked_user" edge to UserAccount entities by IDs.
+// RemoveBlockedUserIDs removes the "blocked_users" edge to BlockedUsersRelationship entities by IDs.
 func (uauo *UserAccountUpdateOne) RemoveBlockedUserIDs(ids ...int) *UserAccountUpdateOne {
 	uauo.mutation.RemoveBlockedUserIDs(ids...)
 	return uauo
 }
 
-// RemoveBlockedUser removes "blocked_user" edges to UserAccount entities.
-func (uauo *UserAccountUpdateOne) RemoveBlockedUser(u ...*UserAccount) *UserAccountUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// RemoveBlockedUsers removes "blocked_users" edges to BlockedUsersRelationship entities.
+func (uauo *UserAccountUpdateOne) RemoveBlockedUsers(b ...*BlockedUsersRelationship) *UserAccountUpdateOne {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uauo.RemoveBlockedUserIDs(ids...)
 }
 
-// ClearUserCountInfo clears the "user_count_info" edge to the UserCount entity.
-func (uauo *UserAccountUpdateOne) ClearUserCountInfo() *UserAccountUpdateOne {
-	uauo.mutation.ClearUserCountInfo()
+// ClearUserCount clears the "user_count" edge to the UserCount entity.
+func (uauo *UserAccountUpdateOne) ClearUserCount() *UserAccountUpdateOne {
+	uauo.mutation.ClearUserCount()
 	return uauo
+}
+
+// ClearThreads clears all "threads" edges to the Thread entity.
+func (uauo *UserAccountUpdateOne) ClearThreads() *UserAccountUpdateOne {
+	uauo.mutation.ClearThreads()
+	return uauo
+}
+
+// RemoveThreadIDs removes the "threads" edge to Thread entities by IDs.
+func (uauo *UserAccountUpdateOne) RemoveThreadIDs(ids ...int) *UserAccountUpdateOne {
+	uauo.mutation.RemoveThreadIDs(ids...)
+	return uauo
+}
+
+// RemoveThreads removes "threads" edges to Thread entities.
+func (uauo *UserAccountUpdateOne) RemoveThreads(t ...*Thread) *UserAccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uauo.RemoveThreadIDs(ids...)
 }
 
 // Where appends a list predicates to the UserAccountUpdate builder.
@@ -974,26 +1094,26 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 	}
 	if uauo.mutation.FollowersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := uauo.mutation.RemovedFollowersIDs(); len(nodes) > 0 && !uauo.mutation.FollowersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1003,13 +1123,13 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 	}
 	if nodes := uauo.mutation.FollowersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1017,28 +1137,28 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uauo.mutation.FollowingCleared() {
+	if uauo.mutation.FollowingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uauo.mutation.RemovedFollowingIDs(); len(nodes) > 0 && !uauo.mutation.FollowingCleared() {
+	if nodes := uauo.mutation.RemovedFollowingsIDs(); len(nodes) > 0 && !uauo.mutation.FollowingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1046,15 +1166,15 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uauo.mutation.FollowingIDs(); len(nodes) > 0 {
+	if nodes := uauo.mutation.FollowingsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1064,26 +1184,26 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 	}
 	if uauo.mutation.BlockedByCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := uauo.mutation.RemovedBlockedByIDs(); len(nodes) > 0 && !uauo.mutation.BlockedByCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1093,13 +1213,13 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 	}
 	if nodes := uauo.mutation.BlockedByIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1107,28 +1227,28 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uauo.mutation.BlockedUserCleared() {
+	if uauo.mutation.BlockedUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uauo.mutation.RemovedBlockedUserIDs(); len(nodes) > 0 && !uauo.mutation.BlockedUserCleared() {
+	if nodes := uauo.mutation.RemovedBlockedUsersIDs(); len(nodes) > 0 && !uauo.mutation.BlockedUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1136,15 +1256,15 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uauo.mutation.BlockedUserIDs(); len(nodes) > 0 {
+	if nodes := uauo.mutation.BlockedUsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1152,12 +1272,12 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uauo.mutation.UserCountInfoCleared() {
+	if uauo.mutation.UserCountCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   useraccount.UserCountInfoTable,
-			Columns: []string{useraccount.UserCountInfoColumn},
+			Table:   useraccount.UserCountTable,
+			Columns: []string{useraccount.UserCountColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt),
@@ -1165,15 +1285,60 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uauo.mutation.UserCountInfoIDs(); len(nodes) > 0 {
+	if nodes := uauo.mutation.UserCountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   useraccount.UserCountInfoTable,
-			Columns: []string{useraccount.UserCountInfoColumn},
+			Table:   useraccount.UserCountTable,
+			Columns: []string{useraccount.UserCountColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uauo.mutation.ThreadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uauo.mutation.RemovedThreadsIDs(); len(nodes) > 0 && !uauo.mutation.ThreadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uauo.mutation.ThreadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

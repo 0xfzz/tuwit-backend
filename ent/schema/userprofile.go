@@ -24,6 +24,8 @@ func (UserProfile) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("display_name"),
 		field.String("bio"),
+		field.Int("profile_picture_id").Optional(),
+		field.Int("banner_id").Optional(),
 	}
 }
 
@@ -31,7 +33,7 @@ func (UserProfile) Fields() []ent.Field {
 func (UserProfile) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("account", UserAccount.Type).Ref("profile").Unique().Required(),
-		edge.To("profile_picture", Media.Type).Unique(),
-		edge.To("banner", Media.Type).Unique(),
+		edge.To("profile_picture", Media.Type).Unique().Field("profile_picture_id"),
+		edge.To("banner", Media.Type).Unique().Field("banner_id"),
 	}
 }

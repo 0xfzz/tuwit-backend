@@ -9,6 +9,18 @@ import (
 	"github.com/0xfzz/tuwitt/ent"
 )
 
+// The BlockedUsersRelationshipFunc type is an adapter to allow the use of ordinary
+// function as BlockedUsersRelationship mutator.
+type BlockedUsersRelationshipFunc func(context.Context, *ent.BlockedUsersRelationshipMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BlockedUsersRelationshipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BlockedUsersRelationshipMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BlockedUsersRelationshipMutation", m)
+}
+
 // The MediaFunc type is an adapter to allow the use of ordinary
 // function as Media mutator.
 type MediaFunc func(context.Context, *ent.MediaMutation) (ent.Value, error)
@@ -45,6 +57,18 @@ func (f ThreadCountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ThreadCountMutation", m)
 }
 
+// The ThreadLikeUserFunc type is an adapter to allow the use of ordinary
+// function as ThreadLikeUser mutator.
+type ThreadLikeUserFunc func(context.Context, *ent.ThreadLikeUserMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ThreadLikeUserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ThreadLikeUserMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ThreadLikeUserMutation", m)
+}
+
 // The UserAccountFunc type is an adapter to allow the use of ordinary
 // function as UserAccount mutator.
 type UserAccountFunc func(context.Context, *ent.UserAccountMutation) (ent.Value, error)
@@ -67,6 +91,18 @@ func (f UserCountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserCountMutation", m)
+}
+
+// The UserFollowerRelationshipFunc type is an adapter to allow the use of ordinary
+// function as UserFollowerRelationship mutator.
+type UserFollowerRelationshipFunc func(context.Context, *ent.UserFollowerRelationshipMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserFollowerRelationshipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserFollowerRelationshipMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserFollowerRelationshipMutation", m)
 }
 
 // The UserProfileFunc type is an adapter to allow the use of ordinary

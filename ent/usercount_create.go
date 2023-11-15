@@ -48,19 +48,15 @@ func (ucc *UserCountCreate) SetNillableFollowingsCount(i *int) *UserCountCreate 
 	return ucc
 }
 
-// AddUserIDs adds the "user" edge to the UserAccount entity by IDs.
-func (ucc *UserCountCreate) AddUserIDs(ids ...int) *UserCountCreate {
-	ucc.mutation.AddUserIDs(ids...)
+// SetUserID sets the "user" edge to the UserAccount entity by ID.
+func (ucc *UserCountCreate) SetUserID(id int) *UserCountCreate {
+	ucc.mutation.SetUserID(id)
 	return ucc
 }
 
-// AddUser adds the "user" edges to the UserAccount entity.
-func (ucc *UserCountCreate) AddUser(u ...*UserAccount) *UserCountCreate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return ucc.AddUserIDs(ids...)
+// SetUser sets the "user" edge to the UserAccount entity.
+func (ucc *UserCountCreate) SetUser(u *UserAccount) *UserCountCreate {
+	return ucc.SetUserID(u.ID)
 }
 
 // Mutation returns the UserCountMutation object of the builder.
@@ -116,7 +112,7 @@ func (ucc *UserCountCreate) check() error {
 	if _, ok := ucc.mutation.FollowingsCount(); !ok {
 		return &ValidationError{Name: "followings_count", err: errors.New(`ent: missing required field "UserCount.followings_count"`)}
 	}
-	if len(ucc.mutation.UserIDs()) == 0 {
+	if _, ok := ucc.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "UserCount.user"`)}
 	}
 	return nil
@@ -155,7 +151,7 @@ func (ucc *UserCountCreate) createSpec() (*UserCount, *sqlgraph.CreateSpec) {
 	}
 	if nodes := ucc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   usercount.UserTable,
 			Columns: []string{usercount.UserColumn},
@@ -167,6 +163,7 @@ func (ucc *UserCountCreate) createSpec() (*UserCount, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.user_account_user_count = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

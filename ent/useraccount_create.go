@@ -9,8 +9,11 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
+	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
+	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -100,14 +103,14 @@ func (uac *UserAccountCreate) SetProfile(u *UserProfile) *UserAccountCreate {
 	return uac.SetProfileID(u.ID)
 }
 
-// AddFollowerIDs adds the "followers" edge to the UserAccount entity by IDs.
+// AddFollowerIDs adds the "followers" edge to the UserFollowerRelationship entity by IDs.
 func (uac *UserAccountCreate) AddFollowerIDs(ids ...int) *UserAccountCreate {
 	uac.mutation.AddFollowerIDs(ids...)
 	return uac
 }
 
-// AddFollowers adds the "followers" edges to the UserAccount entity.
-func (uac *UserAccountCreate) AddFollowers(u ...*UserAccount) *UserAccountCreate {
+// AddFollowers adds the "followers" edges to the UserFollowerRelationship entity.
+func (uac *UserAccountCreate) AddFollowers(u ...*UserFollowerRelationship) *UserAccountCreate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -115,14 +118,14 @@ func (uac *UserAccountCreate) AddFollowers(u ...*UserAccount) *UserAccountCreate
 	return uac.AddFollowerIDs(ids...)
 }
 
-// AddFollowingIDs adds the "following" edge to the UserAccount entity by IDs.
+// AddFollowingIDs adds the "followings" edge to the UserFollowerRelationship entity by IDs.
 func (uac *UserAccountCreate) AddFollowingIDs(ids ...int) *UserAccountCreate {
 	uac.mutation.AddFollowingIDs(ids...)
 	return uac
 }
 
-// AddFollowing adds the "following" edges to the UserAccount entity.
-func (uac *UserAccountCreate) AddFollowing(u ...*UserAccount) *UserAccountCreate {
+// AddFollowings adds the "followings" edges to the UserFollowerRelationship entity.
+func (uac *UserAccountCreate) AddFollowings(u ...*UserFollowerRelationship) *UserAccountCreate {
 	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
@@ -130,53 +133,68 @@ func (uac *UserAccountCreate) AddFollowing(u ...*UserAccount) *UserAccountCreate
 	return uac.AddFollowingIDs(ids...)
 }
 
-// AddBlockedByIDs adds the "blocked_by" edge to the UserAccount entity by IDs.
+// AddBlockedByIDs adds the "blocked_by" edge to the BlockedUsersRelationship entity by IDs.
 func (uac *UserAccountCreate) AddBlockedByIDs(ids ...int) *UserAccountCreate {
 	uac.mutation.AddBlockedByIDs(ids...)
 	return uac
 }
 
-// AddBlockedBy adds the "blocked_by" edges to the UserAccount entity.
-func (uac *UserAccountCreate) AddBlockedBy(u ...*UserAccount) *UserAccountCreate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddBlockedBy adds the "blocked_by" edges to the BlockedUsersRelationship entity.
+func (uac *UserAccountCreate) AddBlockedBy(b ...*BlockedUsersRelationship) *UserAccountCreate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uac.AddBlockedByIDs(ids...)
 }
 
-// AddBlockedUserIDs adds the "blocked_user" edge to the UserAccount entity by IDs.
+// AddBlockedUserIDs adds the "blocked_users" edge to the BlockedUsersRelationship entity by IDs.
 func (uac *UserAccountCreate) AddBlockedUserIDs(ids ...int) *UserAccountCreate {
 	uac.mutation.AddBlockedUserIDs(ids...)
 	return uac
 }
 
-// AddBlockedUser adds the "blocked_user" edges to the UserAccount entity.
-func (uac *UserAccountCreate) AddBlockedUser(u ...*UserAccount) *UserAccountCreate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddBlockedUsers adds the "blocked_users" edges to the BlockedUsersRelationship entity.
+func (uac *UserAccountCreate) AddBlockedUsers(b ...*BlockedUsersRelationship) *UserAccountCreate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
 	}
 	return uac.AddBlockedUserIDs(ids...)
 }
 
-// SetUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID.
-func (uac *UserAccountCreate) SetUserCountInfoID(id int) *UserAccountCreate {
-	uac.mutation.SetUserCountInfoID(id)
+// SetUserCountID sets the "user_count" edge to the UserCount entity by ID.
+func (uac *UserAccountCreate) SetUserCountID(id int) *UserAccountCreate {
+	uac.mutation.SetUserCountID(id)
 	return uac
 }
 
-// SetNillableUserCountInfoID sets the "user_count_info" edge to the UserCount entity by ID if the given value is not nil.
-func (uac *UserAccountCreate) SetNillableUserCountInfoID(id *int) *UserAccountCreate {
+// SetNillableUserCountID sets the "user_count" edge to the UserCount entity by ID if the given value is not nil.
+func (uac *UserAccountCreate) SetNillableUserCountID(id *int) *UserAccountCreate {
 	if id != nil {
-		uac = uac.SetUserCountInfoID(*id)
+		uac = uac.SetUserCountID(*id)
 	}
 	return uac
 }
 
-// SetUserCountInfo sets the "user_count_info" edge to the UserCount entity.
-func (uac *UserAccountCreate) SetUserCountInfo(u *UserCount) *UserAccountCreate {
-	return uac.SetUserCountInfoID(u.ID)
+// SetUserCount sets the "user_count" edge to the UserCount entity.
+func (uac *UserAccountCreate) SetUserCount(u *UserCount) *UserAccountCreate {
+	return uac.SetUserCountID(u.ID)
+}
+
+// AddThreadIDs adds the "threads" edge to the Thread entity by IDs.
+func (uac *UserAccountCreate) AddThreadIDs(ids ...int) *UserAccountCreate {
+	uac.mutation.AddThreadIDs(ids...)
+	return uac
+}
+
+// AddThreads adds the "threads" edges to the Thread entity.
+func (uac *UserAccountCreate) AddThreads(t ...*Thread) *UserAccountCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uac.AddThreadIDs(ids...)
 }
 
 // Mutation returns the UserAccountMutation object of the builder.
@@ -316,13 +334,13 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 	}
 	if nodes := uac.mutation.FollowersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.FollowersTable,
-			Columns: useraccount.FollowersPrimaryKey,
+			Columns: []string{useraccount.FollowersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -330,15 +348,15 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uac.mutation.FollowingIDs(); len(nodes) > 0 {
+	if nodes := uac.mutation.FollowingsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.FollowingTable,
-			Columns: useraccount.FollowingPrimaryKey,
+			Table:   useraccount.FollowingsTable,
+			Columns: []string{useraccount.FollowingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userfollowerrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -348,13 +366,13 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 	}
 	if nodes := uac.mutation.BlockedByIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
 			Table:   useraccount.BlockedByTable,
-			Columns: useraccount.BlockedByPrimaryKey,
+			Columns: []string{useraccount.BlockedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -362,15 +380,15 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uac.mutation.BlockedUserIDs(); len(nodes) > 0 {
+	if nodes := uac.mutation.BlockedUsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   useraccount.BlockedUserTable,
-			Columns: useraccount.BlockedUserPrimaryKey,
+			Table:   useraccount.BlockedUsersTable,
+			Columns: []string{useraccount.BlockedUsersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(blockedusersrelationship.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -378,12 +396,12 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uac.mutation.UserCountInfoIDs(); len(nodes) > 0 {
+	if nodes := uac.mutation.UserCountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   useraccount.UserCountInfoTable,
-			Columns: []string{useraccount.UserCountInfoColumn},
+			Table:   useraccount.UserCountTable,
+			Columns: []string{useraccount.UserCountColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usercount.FieldID, field.TypeInt),
@@ -392,7 +410,22 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_account_user_count_info = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.ThreadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.ThreadsTable,
+			Columns: []string{useraccount.ThreadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

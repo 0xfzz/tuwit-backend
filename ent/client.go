@@ -15,11 +15,14 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
+	"github.com/0xfzz/tuwitt/ent/threadlikeuser"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
+	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -28,16 +31,22 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// BlockedUsersRelationship is the client for interacting with the BlockedUsersRelationship builders.
+	BlockedUsersRelationship *BlockedUsersRelationshipClient
 	// Media is the client for interacting with the Media builders.
 	Media *MediaClient
 	// Thread is the client for interacting with the Thread builders.
 	Thread *ThreadClient
 	// ThreadCount is the client for interacting with the ThreadCount builders.
 	ThreadCount *ThreadCountClient
+	// ThreadLikeUser is the client for interacting with the ThreadLikeUser builders.
+	ThreadLikeUser *ThreadLikeUserClient
 	// UserAccount is the client for interacting with the UserAccount builders.
 	UserAccount *UserAccountClient
 	// UserCount is the client for interacting with the UserCount builders.
 	UserCount *UserCountClient
+	// UserFollowerRelationship is the client for interacting with the UserFollowerRelationship builders.
+	UserFollowerRelationship *UserFollowerRelationshipClient
 	// UserProfile is the client for interacting with the UserProfile builders.
 	UserProfile *UserProfileClient
 }
@@ -53,11 +62,14 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.BlockedUsersRelationship = NewBlockedUsersRelationshipClient(c.config)
 	c.Media = NewMediaClient(c.config)
 	c.Thread = NewThreadClient(c.config)
 	c.ThreadCount = NewThreadCountClient(c.config)
+	c.ThreadLikeUser = NewThreadLikeUserClient(c.config)
 	c.UserAccount = NewUserAccountClient(c.config)
 	c.UserCount = NewUserCountClient(c.config)
+	c.UserFollowerRelationship = NewUserFollowerRelationshipClient(c.config)
 	c.UserProfile = NewUserProfileClient(c.config)
 }
 
@@ -142,14 +154,17 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Media:       NewMediaClient(cfg),
-		Thread:      NewThreadClient(cfg),
-		ThreadCount: NewThreadCountClient(cfg),
-		UserAccount: NewUserAccountClient(cfg),
-		UserCount:   NewUserCountClient(cfg),
-		UserProfile: NewUserProfileClient(cfg),
+		ctx:                      ctx,
+		config:                   cfg,
+		BlockedUsersRelationship: NewBlockedUsersRelationshipClient(cfg),
+		Media:                    NewMediaClient(cfg),
+		Thread:                   NewThreadClient(cfg),
+		ThreadCount:              NewThreadCountClient(cfg),
+		ThreadLikeUser:           NewThreadLikeUserClient(cfg),
+		UserAccount:              NewUserAccountClient(cfg),
+		UserCount:                NewUserCountClient(cfg),
+		UserFollowerRelationship: NewUserFollowerRelationshipClient(cfg),
+		UserProfile:              NewUserProfileClient(cfg),
 	}, nil
 }
 
@@ -167,21 +182,24 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Media:       NewMediaClient(cfg),
-		Thread:      NewThreadClient(cfg),
-		ThreadCount: NewThreadCountClient(cfg),
-		UserAccount: NewUserAccountClient(cfg),
-		UserCount:   NewUserCountClient(cfg),
-		UserProfile: NewUserProfileClient(cfg),
+		ctx:                      ctx,
+		config:                   cfg,
+		BlockedUsersRelationship: NewBlockedUsersRelationshipClient(cfg),
+		Media:                    NewMediaClient(cfg),
+		Thread:                   NewThreadClient(cfg),
+		ThreadCount:              NewThreadCountClient(cfg),
+		ThreadLikeUser:           NewThreadLikeUserClient(cfg),
+		UserAccount:              NewUserAccountClient(cfg),
+		UserCount:                NewUserCountClient(cfg),
+		UserFollowerRelationship: NewUserFollowerRelationshipClient(cfg),
+		UserProfile:              NewUserProfileClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Media.
+//		BlockedUsersRelationship.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -204,7 +222,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Media, c.Thread, c.ThreadCount, c.UserAccount, c.UserCount, c.UserProfile,
+		c.BlockedUsersRelationship, c.Media, c.Thread, c.ThreadCount, c.ThreadLikeUser,
+		c.UserAccount, c.UserCount, c.UserFollowerRelationship, c.UserProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -214,7 +233,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Media, c.Thread, c.ThreadCount, c.UserAccount, c.UserCount, c.UserProfile,
+		c.BlockedUsersRelationship, c.Media, c.Thread, c.ThreadCount, c.ThreadLikeUser,
+		c.UserAccount, c.UserCount, c.UserFollowerRelationship, c.UserProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -223,20 +243,191 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *BlockedUsersRelationshipMutation:
+		return c.BlockedUsersRelationship.mutate(ctx, m)
 	case *MediaMutation:
 		return c.Media.mutate(ctx, m)
 	case *ThreadMutation:
 		return c.Thread.mutate(ctx, m)
 	case *ThreadCountMutation:
 		return c.ThreadCount.mutate(ctx, m)
+	case *ThreadLikeUserMutation:
+		return c.ThreadLikeUser.mutate(ctx, m)
 	case *UserAccountMutation:
 		return c.UserAccount.mutate(ctx, m)
 	case *UserCountMutation:
 		return c.UserCount.mutate(ctx, m)
+	case *UserFollowerRelationshipMutation:
+		return c.UserFollowerRelationship.mutate(ctx, m)
 	case *UserProfileMutation:
 		return c.UserProfile.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// BlockedUsersRelationshipClient is a client for the BlockedUsersRelationship schema.
+type BlockedUsersRelationshipClient struct {
+	config
+}
+
+// NewBlockedUsersRelationshipClient returns a client for the BlockedUsersRelationship from the given config.
+func NewBlockedUsersRelationshipClient(c config) *BlockedUsersRelationshipClient {
+	return &BlockedUsersRelationshipClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `blockedusersrelationship.Hooks(f(g(h())))`.
+func (c *BlockedUsersRelationshipClient) Use(hooks ...Hook) {
+	c.hooks.BlockedUsersRelationship = append(c.hooks.BlockedUsersRelationship, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `blockedusersrelationship.Intercept(f(g(h())))`.
+func (c *BlockedUsersRelationshipClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BlockedUsersRelationship = append(c.inters.BlockedUsersRelationship, interceptors...)
+}
+
+// Create returns a builder for creating a BlockedUsersRelationship entity.
+func (c *BlockedUsersRelationshipClient) Create() *BlockedUsersRelationshipCreate {
+	mutation := newBlockedUsersRelationshipMutation(c.config, OpCreate)
+	return &BlockedUsersRelationshipCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BlockedUsersRelationship entities.
+func (c *BlockedUsersRelationshipClient) CreateBulk(builders ...*BlockedUsersRelationshipCreate) *BlockedUsersRelationshipCreateBulk {
+	return &BlockedUsersRelationshipCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BlockedUsersRelationshipClient) MapCreateBulk(slice any, setFunc func(*BlockedUsersRelationshipCreate, int)) *BlockedUsersRelationshipCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BlockedUsersRelationshipCreateBulk{err: fmt.Errorf("calling to BlockedUsersRelationshipClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BlockedUsersRelationshipCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BlockedUsersRelationshipCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BlockedUsersRelationship.
+func (c *BlockedUsersRelationshipClient) Update() *BlockedUsersRelationshipUpdate {
+	mutation := newBlockedUsersRelationshipMutation(c.config, OpUpdate)
+	return &BlockedUsersRelationshipUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BlockedUsersRelationshipClient) UpdateOne(bur *BlockedUsersRelationship) *BlockedUsersRelationshipUpdateOne {
+	mutation := newBlockedUsersRelationshipMutation(c.config, OpUpdateOne, withBlockedUsersRelationship(bur))
+	return &BlockedUsersRelationshipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BlockedUsersRelationshipClient) UpdateOneID(id int) *BlockedUsersRelationshipUpdateOne {
+	mutation := newBlockedUsersRelationshipMutation(c.config, OpUpdateOne, withBlockedUsersRelationshipID(id))
+	return &BlockedUsersRelationshipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BlockedUsersRelationship.
+func (c *BlockedUsersRelationshipClient) Delete() *BlockedUsersRelationshipDelete {
+	mutation := newBlockedUsersRelationshipMutation(c.config, OpDelete)
+	return &BlockedUsersRelationshipDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BlockedUsersRelationshipClient) DeleteOne(bur *BlockedUsersRelationship) *BlockedUsersRelationshipDeleteOne {
+	return c.DeleteOneID(bur.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BlockedUsersRelationshipClient) DeleteOneID(id int) *BlockedUsersRelationshipDeleteOne {
+	builder := c.Delete().Where(blockedusersrelationship.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BlockedUsersRelationshipDeleteOne{builder}
+}
+
+// Query returns a query builder for BlockedUsersRelationship.
+func (c *BlockedUsersRelationshipClient) Query() *BlockedUsersRelationshipQuery {
+	return &BlockedUsersRelationshipQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBlockedUsersRelationship},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BlockedUsersRelationship entity by its id.
+func (c *BlockedUsersRelationshipClient) Get(ctx context.Context, id int) (*BlockedUsersRelationship, error) {
+	return c.Query().Where(blockedusersrelationship.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BlockedUsersRelationshipClient) GetX(ctx context.Context, id int) *BlockedUsersRelationship {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBlocker queries the blocker edge of a BlockedUsersRelationship.
+func (c *BlockedUsersRelationshipClient) QueryBlocker(bur *BlockedUsersRelationship) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bur.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(blockedusersrelationship.Table, blockedusersrelationship.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, blockedusersrelationship.BlockerTable, blockedusersrelationship.BlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(bur.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlockedUser queries the blocked_user edge of a BlockedUsersRelationship.
+func (c *BlockedUsersRelationshipClient) QueryBlockedUser(bur *BlockedUsersRelationship) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bur.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(blockedusersrelationship.Table, blockedusersrelationship.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, blockedusersrelationship.BlockedUserTable, blockedusersrelationship.BlockedUserColumn),
+		)
+		fromV = sqlgraph.Neighbors(bur.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BlockedUsersRelationshipClient) Hooks() []Hook {
+	return c.hooks.BlockedUsersRelationship
+}
+
+// Interceptors returns the client interceptors.
+func (c *BlockedUsersRelationshipClient) Interceptors() []Interceptor {
+	return c.inters.BlockedUsersRelationship
+}
+
+func (c *BlockedUsersRelationshipClient) mutate(ctx context.Context, m *BlockedUsersRelationshipMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BlockedUsersRelationshipCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BlockedUsersRelationshipUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BlockedUsersRelationshipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BlockedUsersRelationshipDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BlockedUsersRelationship mutation op: %q", m.Op())
 	}
 }
 
@@ -529,15 +720,15 @@ func (c *ThreadClient) GetX(ctx context.Context, id int) *Thread {
 	return obj
 }
 
-// QueryParentThread queries the parent_thread edge of a Thread.
-func (c *ThreadClient) QueryParentThread(t *Thread) *ThreadQuery {
-	query := (&ThreadClient{config: c.config}).Query()
+// QueryAuthor queries the author edge of a Thread.
+func (c *ThreadClient) QueryAuthor(t *Thread) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread.Table, thread.FieldID, id),
-			sqlgraph.To(thread.Table, thread.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, thread.ParentThreadTable, thread.ParentThreadColumn),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread.AuthorTable, thread.AuthorColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -545,15 +736,79 @@ func (c *ThreadClient) QueryParentThread(t *Thread) *ThreadQuery {
 	return query
 }
 
-// QueryChildThreads queries the child_threads edge of a Thread.
-func (c *ThreadClient) QueryChildThreads(t *Thread) *ThreadQuery {
+// QueryParent queries the parent edge of a Thread.
+func (c *ThreadClient) QueryParent(t *Thread) *ThreadQuery {
 	query := (&ThreadClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread.Table, thread.FieldID, id),
 			sqlgraph.To(thread.Table, thread.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, thread.ChildThreadsTable, thread.ChildThreadsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread.ParentTable, thread.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChildren queries the children edge of a Thread.
+func (c *ThreadClient) QueryChildren(t *Thread) *ThreadQuery {
+	query := (&ThreadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, id),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, thread.ChildrenTable, thread.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryThreadCount queries the thread_count edge of a Thread.
+func (c *ThreadClient) QueryThreadCount(t *Thread) *ThreadCountQuery {
+	query := (&ThreadCountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, id),
+			sqlgraph.To(threadcount.Table, threadcount.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, thread.ThreadCountTable, thread.ThreadCountColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReposted queries the reposted edge of a Thread.
+func (c *ThreadClient) QueryReposted(t *Thread) *ThreadQuery {
+	query := (&ThreadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, id),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, thread.RepostedTable, thread.RepostedColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRepost queries the repost edge of a Thread.
+func (c *ThreadClient) QueryRepost(t *Thread) *ThreadQuery {
+	query := (&ThreadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread.Table, thread.FieldID, id),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, thread.RepostTable, thread.RepostColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -710,6 +965,22 @@ func (c *ThreadCountClient) GetX(ctx context.Context, id int) *ThreadCount {
 	return obj
 }
 
+// QueryThread queries the thread edge of a ThreadCount.
+func (c *ThreadCountClient) QueryThread(tc *ThreadCount) *ThreadQuery {
+	query := (&ThreadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := tc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(threadcount.Table, threadcount.FieldID, id),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, threadcount.ThreadTable, threadcount.ThreadColumn),
+		)
+		fromV = sqlgraph.Neighbors(tc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ThreadCountClient) Hooks() []Hook {
 	return c.hooks.ThreadCount
@@ -732,6 +1003,139 @@ func (c *ThreadCountClient) mutate(ctx context.Context, m *ThreadCountMutation) 
 		return (&ThreadCountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ThreadCount mutation op: %q", m.Op())
+	}
+}
+
+// ThreadLikeUserClient is a client for the ThreadLikeUser schema.
+type ThreadLikeUserClient struct {
+	config
+}
+
+// NewThreadLikeUserClient returns a client for the ThreadLikeUser from the given config.
+func NewThreadLikeUserClient(c config) *ThreadLikeUserClient {
+	return &ThreadLikeUserClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `threadlikeuser.Hooks(f(g(h())))`.
+func (c *ThreadLikeUserClient) Use(hooks ...Hook) {
+	c.hooks.ThreadLikeUser = append(c.hooks.ThreadLikeUser, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `threadlikeuser.Intercept(f(g(h())))`.
+func (c *ThreadLikeUserClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ThreadLikeUser = append(c.inters.ThreadLikeUser, interceptors...)
+}
+
+// Create returns a builder for creating a ThreadLikeUser entity.
+func (c *ThreadLikeUserClient) Create() *ThreadLikeUserCreate {
+	mutation := newThreadLikeUserMutation(c.config, OpCreate)
+	return &ThreadLikeUserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ThreadLikeUser entities.
+func (c *ThreadLikeUserClient) CreateBulk(builders ...*ThreadLikeUserCreate) *ThreadLikeUserCreateBulk {
+	return &ThreadLikeUserCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ThreadLikeUserClient) MapCreateBulk(slice any, setFunc func(*ThreadLikeUserCreate, int)) *ThreadLikeUserCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ThreadLikeUserCreateBulk{err: fmt.Errorf("calling to ThreadLikeUserClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ThreadLikeUserCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ThreadLikeUserCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ThreadLikeUser.
+func (c *ThreadLikeUserClient) Update() *ThreadLikeUserUpdate {
+	mutation := newThreadLikeUserMutation(c.config, OpUpdate)
+	return &ThreadLikeUserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ThreadLikeUserClient) UpdateOne(tlu *ThreadLikeUser) *ThreadLikeUserUpdateOne {
+	mutation := newThreadLikeUserMutation(c.config, OpUpdateOne, withThreadLikeUser(tlu))
+	return &ThreadLikeUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ThreadLikeUserClient) UpdateOneID(id int) *ThreadLikeUserUpdateOne {
+	mutation := newThreadLikeUserMutation(c.config, OpUpdateOne, withThreadLikeUserID(id))
+	return &ThreadLikeUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ThreadLikeUser.
+func (c *ThreadLikeUserClient) Delete() *ThreadLikeUserDelete {
+	mutation := newThreadLikeUserMutation(c.config, OpDelete)
+	return &ThreadLikeUserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ThreadLikeUserClient) DeleteOne(tlu *ThreadLikeUser) *ThreadLikeUserDeleteOne {
+	return c.DeleteOneID(tlu.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ThreadLikeUserClient) DeleteOneID(id int) *ThreadLikeUserDeleteOne {
+	builder := c.Delete().Where(threadlikeuser.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ThreadLikeUserDeleteOne{builder}
+}
+
+// Query returns a query builder for ThreadLikeUser.
+func (c *ThreadLikeUserClient) Query() *ThreadLikeUserQuery {
+	return &ThreadLikeUserQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeThreadLikeUser},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ThreadLikeUser entity by its id.
+func (c *ThreadLikeUserClient) Get(ctx context.Context, id int) (*ThreadLikeUser, error) {
+	return c.Query().Where(threadlikeuser.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ThreadLikeUserClient) GetX(ctx context.Context, id int) *ThreadLikeUser {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ThreadLikeUserClient) Hooks() []Hook {
+	return c.hooks.ThreadLikeUser
+}
+
+// Interceptors returns the client interceptors.
+func (c *ThreadLikeUserClient) Interceptors() []Interceptor {
+	return c.inters.ThreadLikeUser
+}
+
+func (c *ThreadLikeUserClient) mutate(ctx context.Context, m *ThreadLikeUserMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ThreadLikeUserCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ThreadLikeUserUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ThreadLikeUserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ThreadLikeUserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ThreadLikeUser mutation op: %q", m.Op())
 	}
 }
 
@@ -860,14 +1264,14 @@ func (c *UserAccountClient) QueryProfile(ua *UserAccount) *UserProfileQuery {
 }
 
 // QueryFollowers queries the followers edge of a UserAccount.
-func (c *UserAccountClient) QueryFollowers(ua *UserAccount) *UserAccountQuery {
-	query := (&UserAccountClient{config: c.config}).Query()
+func (c *UserAccountClient) QueryFollowers(ua *UserAccount) *UserFollowerRelationshipQuery {
+	query := (&UserFollowerRelationshipClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ua.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
-			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, useraccount.FollowersTable, useraccount.FollowersPrimaryKey...),
+			sqlgraph.To(userfollowerrelationship.Table, userfollowerrelationship.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.FollowersTable, useraccount.FollowersColumn),
 		)
 		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
 		return fromV, nil
@@ -875,15 +1279,15 @@ func (c *UserAccountClient) QueryFollowers(ua *UserAccount) *UserAccountQuery {
 	return query
 }
 
-// QueryFollowing queries the following edge of a UserAccount.
-func (c *UserAccountClient) QueryFollowing(ua *UserAccount) *UserAccountQuery {
-	query := (&UserAccountClient{config: c.config}).Query()
+// QueryFollowings queries the followings edge of a UserAccount.
+func (c *UserAccountClient) QueryFollowings(ua *UserAccount) *UserFollowerRelationshipQuery {
+	query := (&UserFollowerRelationshipClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ua.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
-			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, useraccount.FollowingTable, useraccount.FollowingPrimaryKey...),
+			sqlgraph.To(userfollowerrelationship.Table, userfollowerrelationship.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.FollowingsTable, useraccount.FollowingsColumn),
 		)
 		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
 		return fromV, nil
@@ -892,14 +1296,14 @@ func (c *UserAccountClient) QueryFollowing(ua *UserAccount) *UserAccountQuery {
 }
 
 // QueryBlockedBy queries the blocked_by edge of a UserAccount.
-func (c *UserAccountClient) QueryBlockedBy(ua *UserAccount) *UserAccountQuery {
-	query := (&UserAccountClient{config: c.config}).Query()
+func (c *UserAccountClient) QueryBlockedBy(ua *UserAccount) *BlockedUsersRelationshipQuery {
+	query := (&BlockedUsersRelationshipClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ua.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
-			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, useraccount.BlockedByTable, useraccount.BlockedByPrimaryKey...),
+			sqlgraph.To(blockedusersrelationship.Table, blockedusersrelationship.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.BlockedByTable, useraccount.BlockedByColumn),
 		)
 		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
 		return fromV, nil
@@ -907,15 +1311,15 @@ func (c *UserAccountClient) QueryBlockedBy(ua *UserAccount) *UserAccountQuery {
 	return query
 }
 
-// QueryBlockedUser queries the blocked_user edge of a UserAccount.
-func (c *UserAccountClient) QueryBlockedUser(ua *UserAccount) *UserAccountQuery {
-	query := (&UserAccountClient{config: c.config}).Query()
+// QueryBlockedUsers queries the blocked_users edge of a UserAccount.
+func (c *UserAccountClient) QueryBlockedUsers(ua *UserAccount) *BlockedUsersRelationshipQuery {
+	query := (&BlockedUsersRelationshipClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ua.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
-			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, useraccount.BlockedUserTable, useraccount.BlockedUserPrimaryKey...),
+			sqlgraph.To(blockedusersrelationship.Table, blockedusersrelationship.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.BlockedUsersTable, useraccount.BlockedUsersColumn),
 		)
 		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
 		return fromV, nil
@@ -923,15 +1327,31 @@ func (c *UserAccountClient) QueryBlockedUser(ua *UserAccount) *UserAccountQuery 
 	return query
 }
 
-// QueryUserCountInfo queries the user_count_info edge of a UserAccount.
-func (c *UserAccountClient) QueryUserCountInfo(ua *UserAccount) *UserCountQuery {
+// QueryUserCount queries the user_count edge of a UserAccount.
+func (c *UserAccountClient) QueryUserCount(ua *UserAccount) *UserCountQuery {
 	query := (&UserCountClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := ua.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
 			sqlgraph.To(usercount.Table, usercount.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, useraccount.UserCountInfoTable, useraccount.UserCountInfoColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, useraccount.UserCountTable, useraccount.UserCountColumn),
+		)
+		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryThreads queries the threads edge of a UserAccount.
+func (c *UserAccountClient) QueryThreads(ua *UserAccount) *ThreadQuery {
+	query := (&ThreadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ua.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, id),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.ThreadsTable, useraccount.ThreadsColumn),
 		)
 		fromV = sqlgraph.Neighbors(ua.driver.Dialect(), step)
 		return fromV, nil
@@ -1080,7 +1500,7 @@ func (c *UserCountClient) QueryUser(uc *UserCount) *UserAccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usercount.Table, usercount.FieldID, id),
 			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, usercount.UserTable, usercount.UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, usercount.UserTable, usercount.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(uc.driver.Dialect(), step)
 		return fromV, nil
@@ -1110,6 +1530,171 @@ func (c *UserCountClient) mutate(ctx context.Context, m *UserCountMutation) (Val
 		return (&UserCountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown UserCount mutation op: %q", m.Op())
+	}
+}
+
+// UserFollowerRelationshipClient is a client for the UserFollowerRelationship schema.
+type UserFollowerRelationshipClient struct {
+	config
+}
+
+// NewUserFollowerRelationshipClient returns a client for the UserFollowerRelationship from the given config.
+func NewUserFollowerRelationshipClient(c config) *UserFollowerRelationshipClient {
+	return &UserFollowerRelationshipClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userfollowerrelationship.Hooks(f(g(h())))`.
+func (c *UserFollowerRelationshipClient) Use(hooks ...Hook) {
+	c.hooks.UserFollowerRelationship = append(c.hooks.UserFollowerRelationship, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userfollowerrelationship.Intercept(f(g(h())))`.
+func (c *UserFollowerRelationshipClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserFollowerRelationship = append(c.inters.UserFollowerRelationship, interceptors...)
+}
+
+// Create returns a builder for creating a UserFollowerRelationship entity.
+func (c *UserFollowerRelationshipClient) Create() *UserFollowerRelationshipCreate {
+	mutation := newUserFollowerRelationshipMutation(c.config, OpCreate)
+	return &UserFollowerRelationshipCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserFollowerRelationship entities.
+func (c *UserFollowerRelationshipClient) CreateBulk(builders ...*UserFollowerRelationshipCreate) *UserFollowerRelationshipCreateBulk {
+	return &UserFollowerRelationshipCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserFollowerRelationshipClient) MapCreateBulk(slice any, setFunc func(*UserFollowerRelationshipCreate, int)) *UserFollowerRelationshipCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserFollowerRelationshipCreateBulk{err: fmt.Errorf("calling to UserFollowerRelationshipClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserFollowerRelationshipCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserFollowerRelationshipCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserFollowerRelationship.
+func (c *UserFollowerRelationshipClient) Update() *UserFollowerRelationshipUpdate {
+	mutation := newUserFollowerRelationshipMutation(c.config, OpUpdate)
+	return &UserFollowerRelationshipUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserFollowerRelationshipClient) UpdateOne(ufr *UserFollowerRelationship) *UserFollowerRelationshipUpdateOne {
+	mutation := newUserFollowerRelationshipMutation(c.config, OpUpdateOne, withUserFollowerRelationship(ufr))
+	return &UserFollowerRelationshipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserFollowerRelationshipClient) UpdateOneID(id int) *UserFollowerRelationshipUpdateOne {
+	mutation := newUserFollowerRelationshipMutation(c.config, OpUpdateOne, withUserFollowerRelationshipID(id))
+	return &UserFollowerRelationshipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserFollowerRelationship.
+func (c *UserFollowerRelationshipClient) Delete() *UserFollowerRelationshipDelete {
+	mutation := newUserFollowerRelationshipMutation(c.config, OpDelete)
+	return &UserFollowerRelationshipDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserFollowerRelationshipClient) DeleteOne(ufr *UserFollowerRelationship) *UserFollowerRelationshipDeleteOne {
+	return c.DeleteOneID(ufr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserFollowerRelationshipClient) DeleteOneID(id int) *UserFollowerRelationshipDeleteOne {
+	builder := c.Delete().Where(userfollowerrelationship.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserFollowerRelationshipDeleteOne{builder}
+}
+
+// Query returns a query builder for UserFollowerRelationship.
+func (c *UserFollowerRelationshipClient) Query() *UserFollowerRelationshipQuery {
+	return &UserFollowerRelationshipQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserFollowerRelationship},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserFollowerRelationship entity by its id.
+func (c *UserFollowerRelationshipClient) Get(ctx context.Context, id int) (*UserFollowerRelationship, error) {
+	return c.Query().Where(userfollowerrelationship.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserFollowerRelationshipClient) GetX(ctx context.Context, id int) *UserFollowerRelationship {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryFollower queries the follower edge of a UserFollowerRelationship.
+func (c *UserFollowerRelationshipClient) QueryFollower(ufr *UserFollowerRelationship) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ufr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userfollowerrelationship.Table, userfollowerrelationship.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userfollowerrelationship.FollowerTable, userfollowerrelationship.FollowerColumn),
+		)
+		fromV = sqlgraph.Neighbors(ufr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFollowing queries the following edge of a UserFollowerRelationship.
+func (c *UserFollowerRelationshipClient) QueryFollowing(ufr *UserFollowerRelationship) *UserAccountQuery {
+	query := (&UserAccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ufr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userfollowerrelationship.Table, userfollowerrelationship.FieldID, id),
+			sqlgraph.To(useraccount.Table, useraccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userfollowerrelationship.FollowingTable, userfollowerrelationship.FollowingColumn),
+		)
+		fromV = sqlgraph.Neighbors(ufr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserFollowerRelationshipClient) Hooks() []Hook {
+	return c.hooks.UserFollowerRelationship
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserFollowerRelationshipClient) Interceptors() []Interceptor {
+	return c.inters.UserFollowerRelationship
+}
+
+func (c *UserFollowerRelationshipClient) mutate(ctx context.Context, m *UserFollowerRelationshipMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserFollowerRelationshipCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserFollowerRelationshipUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserFollowerRelationshipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserFollowerRelationshipDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserFollowerRelationship mutation op: %q", m.Op())
 	}
 }
 
@@ -1297,10 +1882,11 @@ func (c *UserProfileClient) mutate(ctx context.Context, m *UserProfileMutation) 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Media, Thread, ThreadCount, UserAccount, UserCount, UserProfile []ent.Hook
+		BlockedUsersRelationship, Media, Thread, ThreadCount, ThreadLikeUser,
+		UserAccount, UserCount, UserFollowerRelationship, UserProfile []ent.Hook
 	}
 	inters struct {
-		Media, Thread, ThreadCount, UserAccount, UserCount,
-		UserProfile []ent.Interceptor
+		BlockedUsersRelationship, Media, Thread, ThreadCount, ThreadLikeUser,
+		UserAccount, UserCount, UserFollowerRelationship, UserProfile []ent.Interceptor
 	}
 )

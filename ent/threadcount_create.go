@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
 )
 
@@ -45,6 +46,17 @@ func (tcc *ThreadCountCreate) SetNillableLikeCount(i *int) *ThreadCountCreate {
 		tcc.SetLikeCount(*i)
 	}
 	return tcc
+}
+
+// SetThreadID sets the "thread" edge to the Thread entity by ID.
+func (tcc *ThreadCountCreate) SetThreadID(id int) *ThreadCountCreate {
+	tcc.mutation.SetThreadID(id)
+	return tcc
+}
+
+// SetThread sets the "thread" edge to the Thread entity.
+func (tcc *ThreadCountCreate) SetThread(t *Thread) *ThreadCountCreate {
+	return tcc.SetThreadID(t.ID)
 }
 
 // Mutation returns the ThreadCountMutation object of the builder.
@@ -100,6 +112,9 @@ func (tcc *ThreadCountCreate) check() error {
 	if _, ok := tcc.mutation.LikeCount(); !ok {
 		return &ValidationError{Name: "like_count", err: errors.New(`ent: missing required field "ThreadCount.like_count"`)}
 	}
+	if _, ok := tcc.mutation.ThreadID(); !ok {
+		return &ValidationError{Name: "thread", err: errors.New(`ent: missing required edge "ThreadCount.thread"`)}
+	}
 	return nil
 }
 
@@ -133,6 +148,23 @@ func (tcc *ThreadCountCreate) createSpec() (*ThreadCount, *sqlgraph.CreateSpec) 
 	if value, ok := tcc.mutation.LikeCount(); ok {
 		_spec.SetField(threadcount.FieldLikeCount, field.TypeInt, value)
 		_node.LikeCount = value
+	}
+	if nodes := tcc.mutation.ThreadIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   threadcount.ThreadTable,
+			Columns: []string{threadcount.ThreadColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.thread_thread_count = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

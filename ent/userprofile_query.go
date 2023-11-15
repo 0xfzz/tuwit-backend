@@ -448,7 +448,7 @@ func (upq *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			upq.withBanner != nil,
 		}
 	)
-	if upq.withAccount != nil || upq.withProfilePicture != nil || upq.withBanner != nil {
+	if upq.withAccount != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -529,10 +529,7 @@ func (upq *UserProfileQuery) loadProfilePicture(ctx context.Context, query *Medi
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*UserProfile)
 	for i := range nodes {
-		if nodes[i].user_profile_profile_picture == nil {
-			continue
-		}
-		fk := *nodes[i].user_profile_profile_picture
+		fk := nodes[i].ProfilePictureID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -549,7 +546,7 @@ func (upq *UserProfileQuery) loadProfilePicture(ctx context.Context, query *Medi
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_profile_profile_picture" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "profile_picture_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -561,10 +558,7 @@ func (upq *UserProfileQuery) loadBanner(ctx context.Context, query *MediaQuery, 
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*UserProfile)
 	for i := range nodes {
-		if nodes[i].user_profile_banner == nil {
-			continue
-		}
-		fk := *nodes[i].user_profile_banner
+		fk := nodes[i].BannerID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -581,7 +575,7 @@ func (upq *UserProfileQuery) loadBanner(ctx context.Context, query *MediaQuery, 
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_profile_banner" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "banner_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -614,6 +608,12 @@ func (upq *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != userprofile.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if upq.withProfilePicture != nil {
+			_spec.Node.AddColumnOnce(userprofile.FieldProfilePictureID)
+		}
+		if upq.withBanner != nil {
+			_spec.Node.AddColumnOnce(userprofile.FieldBannerID)
 		}
 	}
 	if ps := upq.predicates; len(ps) > 0 {

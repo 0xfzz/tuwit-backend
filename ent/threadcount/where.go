@@ -4,6 +4,7 @@ package threadcount
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/0xfzz/tuwitt/ent/predicate"
 )
 
@@ -140,6 +141,29 @@ func LikeCountLT(v int) predicate.ThreadCount {
 // LikeCountLTE applies the LTE predicate on the "like_count" field.
 func LikeCountLTE(v int) predicate.ThreadCount {
 	return predicate.ThreadCount(sql.FieldLTE(FieldLikeCount, v))
+}
+
+// HasThread applies the HasEdge predicate on the "thread" edge.
+func HasThread() predicate.ThreadCount {
+	return predicate.ThreadCount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ThreadTable, ThreadColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasThreadWith applies the HasEdge predicate on the "thread" edge with a given conditions (other predicates).
+func HasThreadWith(preds ...predicate.Thread) predicate.ThreadCount {
+	return predicate.ThreadCount(func(s *sql.Selector) {
+		step := newThreadStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

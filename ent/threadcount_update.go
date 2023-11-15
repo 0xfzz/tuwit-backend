@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/0xfzz/tuwitt/ent/predicate"
+	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
 )
 
@@ -69,9 +70,26 @@ func (tcu *ThreadCountUpdate) AddLikeCount(i int) *ThreadCountUpdate {
 	return tcu
 }
 
+// SetThreadID sets the "thread" edge to the Thread entity by ID.
+func (tcu *ThreadCountUpdate) SetThreadID(id int) *ThreadCountUpdate {
+	tcu.mutation.SetThreadID(id)
+	return tcu
+}
+
+// SetThread sets the "thread" edge to the Thread entity.
+func (tcu *ThreadCountUpdate) SetThread(t *Thread) *ThreadCountUpdate {
+	return tcu.SetThreadID(t.ID)
+}
+
 // Mutation returns the ThreadCountMutation object of the builder.
 func (tcu *ThreadCountUpdate) Mutation() *ThreadCountMutation {
 	return tcu.mutation
+}
+
+// ClearThread clears the "thread" edge to the Thread entity.
+func (tcu *ThreadCountUpdate) ClearThread() *ThreadCountUpdate {
+	tcu.mutation.ClearThread()
+	return tcu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -101,7 +119,18 @@ func (tcu *ThreadCountUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (tcu *ThreadCountUpdate) check() error {
+	if _, ok := tcu.mutation.ThreadID(); tcu.mutation.ThreadCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "ThreadCount.thread"`)
+	}
+	return nil
+}
+
 func (tcu *ThreadCountUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := tcu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(threadcount.Table, threadcount.Columns, sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt))
 	if ps := tcu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -121,6 +150,35 @@ func (tcu *ThreadCountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := tcu.mutation.AddedLikeCount(); ok {
 		_spec.AddField(threadcount.FieldLikeCount, field.TypeInt, value)
+	}
+	if tcu.mutation.ThreadCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   threadcount.ThreadTable,
+			Columns: []string{threadcount.ThreadColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tcu.mutation.ThreadIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   threadcount.ThreadTable,
+			Columns: []string{threadcount.ThreadColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -184,9 +242,26 @@ func (tcuo *ThreadCountUpdateOne) AddLikeCount(i int) *ThreadCountUpdateOne {
 	return tcuo
 }
 
+// SetThreadID sets the "thread" edge to the Thread entity by ID.
+func (tcuo *ThreadCountUpdateOne) SetThreadID(id int) *ThreadCountUpdateOne {
+	tcuo.mutation.SetThreadID(id)
+	return tcuo
+}
+
+// SetThread sets the "thread" edge to the Thread entity.
+func (tcuo *ThreadCountUpdateOne) SetThread(t *Thread) *ThreadCountUpdateOne {
+	return tcuo.SetThreadID(t.ID)
+}
+
 // Mutation returns the ThreadCountMutation object of the builder.
 func (tcuo *ThreadCountUpdateOne) Mutation() *ThreadCountMutation {
 	return tcuo.mutation
+}
+
+// ClearThread clears the "thread" edge to the Thread entity.
+func (tcuo *ThreadCountUpdateOne) ClearThread() *ThreadCountUpdateOne {
+	tcuo.mutation.ClearThread()
+	return tcuo
 }
 
 // Where appends a list predicates to the ThreadCountUpdate builder.
@@ -229,7 +304,18 @@ func (tcuo *ThreadCountUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (tcuo *ThreadCountUpdateOne) check() error {
+	if _, ok := tcuo.mutation.ThreadID(); tcuo.mutation.ThreadCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "ThreadCount.thread"`)
+	}
+	return nil
+}
+
 func (tcuo *ThreadCountUpdateOne) sqlSave(ctx context.Context) (_node *ThreadCount, err error) {
+	if err := tcuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(threadcount.Table, threadcount.Columns, sqlgraph.NewFieldSpec(threadcount.FieldID, field.TypeInt))
 	id, ok := tcuo.mutation.ID()
 	if !ok {
@@ -266,6 +352,35 @@ func (tcuo *ThreadCountUpdateOne) sqlSave(ctx context.Context) (_node *ThreadCou
 	}
 	if value, ok := tcuo.mutation.AddedLikeCount(); ok {
 		_spec.AddField(threadcount.FieldLikeCount, field.TypeInt, value)
+	}
+	if tcuo.mutation.ThreadCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   threadcount.ThreadTable,
+			Columns: []string{threadcount.ThreadColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tcuo.mutation.ThreadIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   threadcount.ThreadTable,
+			Columns: []string{threadcount.ThreadColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &ThreadCount{config: tcuo.config}
 	_spec.Assign = _node.assignValues

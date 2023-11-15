@@ -22,13 +22,15 @@ type UserProfile struct {
 	DisplayName string `json:"display_name,omitempty"`
 	// Bio holds the value of the "bio" field.
 	Bio string `json:"bio,omitempty"`
+	// ProfilePictureID holds the value of the "profile_picture_id" field.
+	ProfilePictureID int `json:"profile_picture_id,omitempty"`
+	// BannerID holds the value of the "banner_id" field.
+	BannerID int `json:"banner_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserProfileQuery when eager-loading is set.
-	Edges                        UserProfileEdges `json:"edges"`
-	user_account_profile         *int
-	user_profile_profile_picture *int
-	user_profile_banner          *int
-	selectValues                 sql.SelectValues
+	Edges                UserProfileEdges `json:"edges"`
+	user_account_profile *int
+	selectValues         sql.SelectValues
 }
 
 // UserProfileEdges holds the relations/edges for other nodes in the graph.
@@ -88,15 +90,11 @@ func (*UserProfile) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case userprofile.FieldID:
+		case userprofile.FieldID, userprofile.FieldProfilePictureID, userprofile.FieldBannerID:
 			values[i] = new(sql.NullInt64)
 		case userprofile.FieldDisplayName, userprofile.FieldBio:
 			values[i] = new(sql.NullString)
 		case userprofile.ForeignKeys[0]: // user_account_profile
-			values[i] = new(sql.NullInt64)
-		case userprofile.ForeignKeys[1]: // user_profile_profile_picture
-			values[i] = new(sql.NullInt64)
-		case userprofile.ForeignKeys[2]: // user_profile_banner
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -131,26 +129,24 @@ func (up *UserProfile) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				up.Bio = value.String
 			}
+		case userprofile.FieldProfilePictureID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field profile_picture_id", values[i])
+			} else if value.Valid {
+				up.ProfilePictureID = int(value.Int64)
+			}
+		case userprofile.FieldBannerID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field banner_id", values[i])
+			} else if value.Valid {
+				up.BannerID = int(value.Int64)
+			}
 		case userprofile.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_account_profile", value)
 			} else if value.Valid {
 				up.user_account_profile = new(int)
 				*up.user_account_profile = int(value.Int64)
-			}
-		case userprofile.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_profile_profile_picture", value)
-			} else if value.Valid {
-				up.user_profile_profile_picture = new(int)
-				*up.user_profile_profile_picture = int(value.Int64)
-			}
-		case userprofile.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_profile_banner", value)
-			} else if value.Valid {
-				up.user_profile_banner = new(int)
-				*up.user_profile_banner = int(value.Int64)
 			}
 		default:
 			up.selectValues.Set(columns[i], values[i])
@@ -208,6 +204,12 @@ func (up *UserProfile) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("bio=")
 	builder.WriteString(up.Bio)
+	builder.WriteString(", ")
+	builder.WriteString("profile_picture_id=")
+	builder.WriteString(fmt.Sprintf("%v", up.ProfilePictureID))
+	builder.WriteString(", ")
+	builder.WriteString("banner_id=")
+	builder.WriteString(fmt.Sprintf("%v", up.BannerID))
 	builder.WriteByte(')')
 	return builder.String()
 }

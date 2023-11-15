@@ -561,6 +561,9 @@ func (mq *MediaQuery) loadOwnerProfilePicture(ctx context.Context, query *UserPr
 		}
 	}
 	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userprofile.FieldProfilePictureID)
+	}
 	query.Where(predicate.UserProfile(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(media.OwnerProfilePictureColumn), fks...))
 	}))
@@ -569,13 +572,10 @@ func (mq *MediaQuery) loadOwnerProfilePicture(ctx context.Context, query *UserPr
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_profile_profile_picture
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_profile_profile_picture" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.ProfilePictureID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_profile_profile_picture" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "profile_picture_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -592,6 +592,9 @@ func (mq *MediaQuery) loadOwnerBanner(ctx context.Context, query *UserProfileQue
 		}
 	}
 	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userprofile.FieldBannerID)
+	}
 	query.Where(predicate.UserProfile(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(media.OwnerBannerColumn), fks...))
 	}))
@@ -600,13 +603,10 @@ func (mq *MediaQuery) loadOwnerBanner(ctx context.Context, query *UserProfileQue
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_profile_banner
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_profile_banner" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.BannerID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_profile_banner" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "banner_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

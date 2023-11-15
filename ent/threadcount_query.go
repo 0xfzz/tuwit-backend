@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/0xfzz/tuwitt/ent/predicate"
+	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
 )
 
@@ -21,6 +22,8 @@ type ThreadCountQuery struct {
 	order      []threadcount.OrderOption
 	inters     []Interceptor
 	predicates []predicate.ThreadCount
+	withThread *ThreadQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +58,28 @@ func (tcq *ThreadCountQuery) Unique(unique bool) *ThreadCountQuery {
 func (tcq *ThreadCountQuery) Order(o ...threadcount.OrderOption) *ThreadCountQuery {
 	tcq.order = append(tcq.order, o...)
 	return tcq
+}
+
+// QueryThread chains the current query on the "thread" edge.
+func (tcq *ThreadCountQuery) QueryThread() *ThreadQuery {
+	query := (&ThreadClient{config: tcq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tcq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tcq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(threadcount.Table, threadcount.FieldID, selector),
+			sqlgraph.To(thread.Table, thread.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, threadcount.ThreadTable, threadcount.ThreadColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tcq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first ThreadCount entity from the query.
@@ -249,10 +274,22 @@ func (tcq *ThreadCountQuery) Clone() *ThreadCountQuery {
 		order:      append([]threadcount.OrderOption{}, tcq.order...),
 		inters:     append([]Interceptor{}, tcq.inters...),
 		predicates: append([]predicate.ThreadCount{}, tcq.predicates...),
+		withThread: tcq.withThread.Clone(),
 		// clone intermediate query.
 		sql:  tcq.sql.Clone(),
 		path: tcq.path,
 	}
+}
+
+// WithThread tells the query-builder to eager-load the nodes that are connected to
+// the "thread" edge. The optional arguments are used to configure the query builder of the edge.
+func (tcq *ThreadCountQuery) WithThread(opts ...func(*ThreadQuery)) *ThreadCountQuery {
+	query := (&ThreadClient{config: tcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tcq.withThread = query
+	return tcq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,15 +368,26 @@ func (tcq *ThreadCountQuery) prepareQuery(ctx context.Context) error {
 
 func (tcq *ThreadCountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ThreadCount, error) {
 	var (
-		nodes = []*ThreadCount{}
-		_spec = tcq.querySpec()
+		nodes       = []*ThreadCount{}
+		withFKs     = tcq.withFKs
+		_spec       = tcq.querySpec()
+		loadedTypes = [1]bool{
+			tcq.withThread != nil,
+		}
 	)
+	if tcq.withThread != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, threadcount.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*ThreadCount).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &ThreadCount{config: tcq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +399,46 @@ func (tcq *ThreadCountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := tcq.withThread; query != nil {
+		if err := tcq.loadThread(ctx, query, nodes, nil,
+			func(n *ThreadCount, e *Thread) { n.Edges.Thread = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (tcq *ThreadCountQuery) loadThread(ctx context.Context, query *ThreadQuery, nodes []*ThreadCount, init func(*ThreadCount), assign func(*ThreadCount, *Thread)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*ThreadCount)
+	for i := range nodes {
+		if nodes[i].thread_thread_count == nil {
+			continue
+		}
+		fk := *nodes[i].thread_thread_count
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(thread.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "thread_thread_count" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (tcq *ThreadCountQuery) sqlCount(ctx context.Context) (int, error) {

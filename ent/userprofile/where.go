@@ -63,6 +63,16 @@ func Bio(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldBio, v))
 }
 
+// ProfilePictureID applies equality check predicate on the "profile_picture_id" field. It's identical to ProfilePictureIDEQ.
+func ProfilePictureID(v int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldProfilePictureID, v))
+}
+
+// BannerID applies equality check predicate on the "banner_id" field. It's identical to BannerIDEQ.
+func BannerID(v int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldBannerID, v))
+}
+
 // DisplayNameEQ applies the EQ predicate on the "display_name" field.
 func DisplayNameEQ(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldDisplayName, v))
@@ -191,6 +201,66 @@ func BioEqualFold(v string) predicate.UserProfile {
 // BioContainsFold applies the ContainsFold predicate on the "bio" field.
 func BioContainsFold(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldContainsFold(FieldBio, v))
+}
+
+// ProfilePictureIDEQ applies the EQ predicate on the "profile_picture_id" field.
+func ProfilePictureIDEQ(v int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldProfilePictureID, v))
+}
+
+// ProfilePictureIDNEQ applies the NEQ predicate on the "profile_picture_id" field.
+func ProfilePictureIDNEQ(v int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNEQ(FieldProfilePictureID, v))
+}
+
+// ProfilePictureIDIn applies the In predicate on the "profile_picture_id" field.
+func ProfilePictureIDIn(vs ...int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldProfilePictureID, vs...))
+}
+
+// ProfilePictureIDNotIn applies the NotIn predicate on the "profile_picture_id" field.
+func ProfilePictureIDNotIn(vs ...int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldProfilePictureID, vs...))
+}
+
+// ProfilePictureIDIsNil applies the IsNil predicate on the "profile_picture_id" field.
+func ProfilePictureIDIsNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIsNull(FieldProfilePictureID))
+}
+
+// ProfilePictureIDNotNil applies the NotNil predicate on the "profile_picture_id" field.
+func ProfilePictureIDNotNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotNull(FieldProfilePictureID))
+}
+
+// BannerIDEQ applies the EQ predicate on the "banner_id" field.
+func BannerIDEQ(v int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldBannerID, v))
+}
+
+// BannerIDNEQ applies the NEQ predicate on the "banner_id" field.
+func BannerIDNEQ(v int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNEQ(FieldBannerID, v))
+}
+
+// BannerIDIn applies the In predicate on the "banner_id" field.
+func BannerIDIn(vs ...int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldBannerID, vs...))
+}
+
+// BannerIDNotIn applies the NotIn predicate on the "banner_id" field.
+func BannerIDNotIn(vs ...int) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldBannerID, vs...))
+}
+
+// BannerIDIsNil applies the IsNil predicate on the "banner_id" field.
+func BannerIDIsNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIsNull(FieldBannerID))
+}
+
+// BannerIDNotNil applies the NotNil predicate on the "banner_id" field.
+func BannerIDNotNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotNull(FieldBannerID))
 }
 
 // HasAccount applies the HasEdge predicate on the "account" edge.

@@ -12,11 +12,14 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
+	"github.com/0xfzz/tuwitt/ent/threadlikeuser"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
+	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -78,12 +81,15 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			media.Table:       media.ValidColumn,
-			thread.Table:      thread.ValidColumn,
-			threadcount.Table: threadcount.ValidColumn,
-			useraccount.Table: useraccount.ValidColumn,
-			usercount.Table:   usercount.ValidColumn,
-			userprofile.Table: userprofile.ValidColumn,
+			blockedusersrelationship.Table: blockedusersrelationship.ValidColumn,
+			media.Table:                    media.ValidColumn,
+			thread.Table:                   thread.ValidColumn,
+			threadcount.Table:              threadcount.ValidColumn,
+			threadlikeuser.Table:           threadlikeuser.ValidColumn,
+			useraccount.Table:              useraccount.ValidColumn,
+			usercount.Table:                usercount.ValidColumn,
+			userfollowerrelationship.Table: userfollowerrelationship.ValidColumn,
+			userprofile.Table:              userprofile.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

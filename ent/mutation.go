@@ -7,15 +7,18 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
 	"github.com/0xfzz/tuwitt/ent/media"
 	"github.com/0xfzz/tuwitt/ent/predicate"
 	"github.com/0xfzz/tuwitt/ent/thread"
 	"github.com/0xfzz/tuwitt/ent/threadcount"
 	"github.com/0xfzz/tuwitt/ent/useraccount"
 	"github.com/0xfzz/tuwitt/ent/usercount"
+	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
 	"github.com/0xfzz/tuwitt/ent/userprofile"
 )
 
@@ -28,13 +31,661 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeMedia       = "Media"
-	TypeThread      = "Thread"
-	TypeThreadCount = "ThreadCount"
-	TypeUserAccount = "UserAccount"
-	TypeUserCount   = "UserCount"
-	TypeUserProfile = "UserProfile"
+	TypeBlockedUsersRelationship = "BlockedUsersRelationship"
+	TypeMedia                    = "Media"
+	TypeThread                   = "Thread"
+	TypeThreadCount              = "ThreadCount"
+	TypeThreadLikeUser           = "ThreadLikeUser"
+	TypeUserAccount              = "UserAccount"
+	TypeUserCount                = "UserCount"
+	TypeUserFollowerRelationship = "UserFollowerRelationship"
+	TypeUserProfile              = "UserProfile"
 )
+
+// BlockedUsersRelationshipMutation represents an operation that mutates the BlockedUsersRelationship nodes in the graph.
+type BlockedUsersRelationshipMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	created_at          *time.Time
+	updated_at          *time.Time
+	clearedFields       map[string]struct{}
+	blocker             *int
+	clearedblocker      bool
+	blocked_user        *int
+	clearedblocked_user bool
+	done                bool
+	oldValue            func(context.Context) (*BlockedUsersRelationship, error)
+	predicates          []predicate.BlockedUsersRelationship
+}
+
+var _ ent.Mutation = (*BlockedUsersRelationshipMutation)(nil)
+
+// blockedusersrelationshipOption allows management of the mutation configuration using functional options.
+type blockedusersrelationshipOption func(*BlockedUsersRelationshipMutation)
+
+// newBlockedUsersRelationshipMutation creates new mutation for the BlockedUsersRelationship entity.
+func newBlockedUsersRelationshipMutation(c config, op Op, opts ...blockedusersrelationshipOption) *BlockedUsersRelationshipMutation {
+	m := &BlockedUsersRelationshipMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeBlockedUsersRelationship,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withBlockedUsersRelationshipID sets the ID field of the mutation.
+func withBlockedUsersRelationshipID(id int) blockedusersrelationshipOption {
+	return func(m *BlockedUsersRelationshipMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *BlockedUsersRelationship
+		)
+		m.oldValue = func(ctx context.Context) (*BlockedUsersRelationship, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().BlockedUsersRelationship.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withBlockedUsersRelationship sets the old BlockedUsersRelationship of the mutation.
+func withBlockedUsersRelationship(node *BlockedUsersRelationship) blockedusersrelationshipOption {
+	return func(m *BlockedUsersRelationshipMutation) {
+		m.oldValue = func(context.Context) (*BlockedUsersRelationship, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m BlockedUsersRelationshipMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m BlockedUsersRelationshipMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *BlockedUsersRelationshipMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *BlockedUsersRelationshipMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().BlockedUsersRelationship.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *BlockedUsersRelationshipMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *BlockedUsersRelationshipMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the BlockedUsersRelationship entity.
+// If the BlockedUsersRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BlockedUsersRelationshipMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *BlockedUsersRelationshipMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *BlockedUsersRelationshipMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *BlockedUsersRelationshipMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the BlockedUsersRelationship entity.
+// If the BlockedUsersRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BlockedUsersRelationshipMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *BlockedUsersRelationshipMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *BlockedUsersRelationshipMutation) SetUserID(i int) {
+	m.blocked_user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *BlockedUsersRelationshipMutation) UserID() (r int, exists bool) {
+	v := m.blocked_user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the BlockedUsersRelationship entity.
+// If the BlockedUsersRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BlockedUsersRelationshipMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ClearUserID clears the value of the "user_id" field.
+func (m *BlockedUsersRelationshipMutation) ClearUserID() {
+	m.blocked_user = nil
+	m.clearedFields[blockedusersrelationship.FieldUserID] = struct{}{}
+}
+
+// UserIDCleared returns if the "user_id" field was cleared in this mutation.
+func (m *BlockedUsersRelationshipMutation) UserIDCleared() bool {
+	_, ok := m.clearedFields[blockedusersrelationship.FieldUserID]
+	return ok
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *BlockedUsersRelationshipMutation) ResetUserID() {
+	m.blocked_user = nil
+	delete(m.clearedFields, blockedusersrelationship.FieldUserID)
+}
+
+// SetBlockerID sets the "blocker_id" field.
+func (m *BlockedUsersRelationshipMutation) SetBlockerID(i int) {
+	m.blocker = &i
+}
+
+// BlockerID returns the value of the "blocker_id" field in the mutation.
+func (m *BlockedUsersRelationshipMutation) BlockerID() (r int, exists bool) {
+	v := m.blocker
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBlockerID returns the old "blocker_id" field's value of the BlockedUsersRelationship entity.
+// If the BlockedUsersRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BlockedUsersRelationshipMutation) OldBlockerID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBlockerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBlockerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBlockerID: %w", err)
+	}
+	return oldValue.BlockerID, nil
+}
+
+// ClearBlockerID clears the value of the "blocker_id" field.
+func (m *BlockedUsersRelationshipMutation) ClearBlockerID() {
+	m.blocker = nil
+	m.clearedFields[blockedusersrelationship.FieldBlockerID] = struct{}{}
+}
+
+// BlockerIDCleared returns if the "blocker_id" field was cleared in this mutation.
+func (m *BlockedUsersRelationshipMutation) BlockerIDCleared() bool {
+	_, ok := m.clearedFields[blockedusersrelationship.FieldBlockerID]
+	return ok
+}
+
+// ResetBlockerID resets all changes to the "blocker_id" field.
+func (m *BlockedUsersRelationshipMutation) ResetBlockerID() {
+	m.blocker = nil
+	delete(m.clearedFields, blockedusersrelationship.FieldBlockerID)
+}
+
+// ClearBlocker clears the "blocker" edge to the UserAccount entity.
+func (m *BlockedUsersRelationshipMutation) ClearBlocker() {
+	m.clearedblocker = true
+	m.clearedFields[blockedusersrelationship.FieldBlockerID] = struct{}{}
+}
+
+// BlockerCleared reports if the "blocker" edge to the UserAccount entity was cleared.
+func (m *BlockedUsersRelationshipMutation) BlockerCleared() bool {
+	return m.BlockerIDCleared() || m.clearedblocker
+}
+
+// BlockerIDs returns the "blocker" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BlockerID instead. It exists only for internal usage by the builders.
+func (m *BlockedUsersRelationshipMutation) BlockerIDs() (ids []int) {
+	if id := m.blocker; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBlocker resets all changes to the "blocker" edge.
+func (m *BlockedUsersRelationshipMutation) ResetBlocker() {
+	m.blocker = nil
+	m.clearedblocker = false
+}
+
+// SetBlockedUserID sets the "blocked_user" edge to the UserAccount entity by id.
+func (m *BlockedUsersRelationshipMutation) SetBlockedUserID(id int) {
+	m.blocked_user = &id
+}
+
+// ClearBlockedUser clears the "blocked_user" edge to the UserAccount entity.
+func (m *BlockedUsersRelationshipMutation) ClearBlockedUser() {
+	m.clearedblocked_user = true
+	m.clearedFields[blockedusersrelationship.FieldUserID] = struct{}{}
+}
+
+// BlockedUserCleared reports if the "blocked_user" edge to the UserAccount entity was cleared.
+func (m *BlockedUsersRelationshipMutation) BlockedUserCleared() bool {
+	return m.UserIDCleared() || m.clearedblocked_user
+}
+
+// BlockedUserID returns the "blocked_user" edge ID in the mutation.
+func (m *BlockedUsersRelationshipMutation) BlockedUserID() (id int, exists bool) {
+	if m.blocked_user != nil {
+		return *m.blocked_user, true
+	}
+	return
+}
+
+// BlockedUserIDs returns the "blocked_user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// BlockedUserID instead. It exists only for internal usage by the builders.
+func (m *BlockedUsersRelationshipMutation) BlockedUserIDs() (ids []int) {
+	if id := m.blocked_user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetBlockedUser resets all changes to the "blocked_user" edge.
+func (m *BlockedUsersRelationshipMutation) ResetBlockedUser() {
+	m.blocked_user = nil
+	m.clearedblocked_user = false
+}
+
+// Where appends a list predicates to the BlockedUsersRelationshipMutation builder.
+func (m *BlockedUsersRelationshipMutation) Where(ps ...predicate.BlockedUsersRelationship) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the BlockedUsersRelationshipMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *BlockedUsersRelationshipMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.BlockedUsersRelationship, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *BlockedUsersRelationshipMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *BlockedUsersRelationshipMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (BlockedUsersRelationship).
+func (m *BlockedUsersRelationshipMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *BlockedUsersRelationshipMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, blockedusersrelationship.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, blockedusersrelationship.FieldUpdatedAt)
+	}
+	if m.blocked_user != nil {
+		fields = append(fields, blockedusersrelationship.FieldUserID)
+	}
+	if m.blocker != nil {
+		fields = append(fields, blockedusersrelationship.FieldBlockerID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *BlockedUsersRelationshipMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case blockedusersrelationship.FieldCreatedAt:
+		return m.CreatedAt()
+	case blockedusersrelationship.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case blockedusersrelationship.FieldUserID:
+		return m.UserID()
+	case blockedusersrelationship.FieldBlockerID:
+		return m.BlockerID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *BlockedUsersRelationshipMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case blockedusersrelationship.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case blockedusersrelationship.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case blockedusersrelationship.FieldUserID:
+		return m.OldUserID(ctx)
+	case blockedusersrelationship.FieldBlockerID:
+		return m.OldBlockerID(ctx)
+	}
+	return nil, fmt.Errorf("unknown BlockedUsersRelationship field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BlockedUsersRelationshipMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case blockedusersrelationship.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case blockedusersrelationship.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case blockedusersrelationship.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case blockedusersrelationship.FieldBlockerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBlockerID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown BlockedUsersRelationship field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *BlockedUsersRelationshipMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *BlockedUsersRelationshipMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BlockedUsersRelationshipMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown BlockedUsersRelationship numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *BlockedUsersRelationshipMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(blockedusersrelationship.FieldUserID) {
+		fields = append(fields, blockedusersrelationship.FieldUserID)
+	}
+	if m.FieldCleared(blockedusersrelationship.FieldBlockerID) {
+		fields = append(fields, blockedusersrelationship.FieldBlockerID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *BlockedUsersRelationshipMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *BlockedUsersRelationshipMutation) ClearField(name string) error {
+	switch name {
+	case blockedusersrelationship.FieldUserID:
+		m.ClearUserID()
+		return nil
+	case blockedusersrelationship.FieldBlockerID:
+		m.ClearBlockerID()
+		return nil
+	}
+	return fmt.Errorf("unknown BlockedUsersRelationship nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *BlockedUsersRelationshipMutation) ResetField(name string) error {
+	switch name {
+	case blockedusersrelationship.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case blockedusersrelationship.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case blockedusersrelationship.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case blockedusersrelationship.FieldBlockerID:
+		m.ResetBlockerID()
+		return nil
+	}
+	return fmt.Errorf("unknown BlockedUsersRelationship field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *BlockedUsersRelationshipMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.blocker != nil {
+		edges = append(edges, blockedusersrelationship.EdgeBlocker)
+	}
+	if m.blocked_user != nil {
+		edges = append(edges, blockedusersrelationship.EdgeBlockedUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *BlockedUsersRelationshipMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case blockedusersrelationship.EdgeBlocker:
+		if id := m.blocker; id != nil {
+			return []ent.Value{*id}
+		}
+	case blockedusersrelationship.EdgeBlockedUser:
+		if id := m.blocked_user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *BlockedUsersRelationshipMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *BlockedUsersRelationshipMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *BlockedUsersRelationshipMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedblocker {
+		edges = append(edges, blockedusersrelationship.EdgeBlocker)
+	}
+	if m.clearedblocked_user {
+		edges = append(edges, blockedusersrelationship.EdgeBlockedUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *BlockedUsersRelationshipMutation) EdgeCleared(name string) bool {
+	switch name {
+	case blockedusersrelationship.EdgeBlocker:
+		return m.clearedblocker
+	case blockedusersrelationship.EdgeBlockedUser:
+		return m.clearedblocked_user
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *BlockedUsersRelationshipMutation) ClearEdge(name string) error {
+	switch name {
+	case blockedusersrelationship.EdgeBlocker:
+		m.ClearBlocker()
+		return nil
+	case blockedusersrelationship.EdgeBlockedUser:
+		m.ClearBlockedUser()
+		return nil
+	}
+	return fmt.Errorf("unknown BlockedUsersRelationship unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *BlockedUsersRelationshipMutation) ResetEdge(name string) error {
+	switch name {
+	case blockedusersrelationship.EdgeBlocker:
+		m.ResetBlocker()
+		return nil
+	case blockedusersrelationship.EdgeBlockedUser:
+		m.ResetBlockedUser()
+		return nil
+	}
+	return fmt.Errorf("unknown BlockedUsersRelationship edge %s", name)
+}
 
 // MediaMutation represents an operation that mutates the Media nodes in the graph.
 type MediaMutation struct {
@@ -678,26 +1329,37 @@ func (m *MediaMutation) ResetEdge(name string) error {
 // ThreadMutation represents an operation that mutates the Thread nodes in the graph.
 type ThreadMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *int
-	content              *string
-	is_comment_disabled  *bool
-	visibility           *thread.Visibility
-	status               *thread.Status
-	is_deleted           *bool
-	clearedFields        map[string]struct{}
-	parent_thread        *int
-	clearedparent_thread bool
-	child_threads        map[int]struct{}
-	removedchild_threads map[int]struct{}
-	clearedchild_threads bool
-	images               map[int]struct{}
-	removedimages        map[int]struct{}
-	clearedimages        bool
-	done                 bool
-	oldValue             func(context.Context) (*Thread, error)
-	predicates           []predicate.Thread
+	op                  Op
+	typ                 string
+	id                  *int
+	created_at          *time.Time
+	updated_at          *time.Time
+	content             *string
+	is_comment_disabled *bool
+	visibility          *thread.Visibility
+	status              *thread.Status
+	is_deleted          *bool
+	clearedFields       map[string]struct{}
+	author              *int
+	clearedauthor       bool
+	parent              *int
+	clearedparent       bool
+	children            map[int]struct{}
+	removedchildren     map[int]struct{}
+	clearedchildren     bool
+	thread_count        map[int]struct{}
+	removedthread_count map[int]struct{}
+	clearedthread_count bool
+	reposted            *int
+	clearedreposted     bool
+	repost              *int
+	clearedrepost       bool
+	images              map[int]struct{}
+	removedimages       map[int]struct{}
+	clearedimages       bool
+	done                bool
+	oldValue            func(context.Context) (*Thread, error)
+	predicates          []predicate.Thread
 }
 
 var _ ent.Mutation = (*ThreadMutation)(nil)
@@ -796,6 +1458,78 @@ func (m *ThreadMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ThreadMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ThreadMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Thread entity.
+// If the Thread object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ThreadMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ThreadMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ThreadMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Thread entity.
+// If the Thread object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ThreadMutation) ResetUpdatedAt() {
+	m.updated_at = nil
 }
 
 // SetContent sets the "content" field.
@@ -978,97 +1712,392 @@ func (m *ThreadMutation) ResetIsDeleted() {
 	m.is_deleted = nil
 }
 
-// SetParentThreadID sets the "parent_thread" edge to the Thread entity by id.
-func (m *ThreadMutation) SetParentThreadID(id int) {
-	m.parent_thread = &id
+// SetAuthorID sets the "author_id" field.
+func (m *ThreadMutation) SetAuthorID(i int) {
+	m.author = &i
 }
 
-// ClearParentThread clears the "parent_thread" edge to the Thread entity.
-func (m *ThreadMutation) ClearParentThread() {
-	m.clearedparent_thread = true
-}
-
-// ParentThreadCleared reports if the "parent_thread" edge to the Thread entity was cleared.
-func (m *ThreadMutation) ParentThreadCleared() bool {
-	return m.clearedparent_thread
-}
-
-// ParentThreadID returns the "parent_thread" edge ID in the mutation.
-func (m *ThreadMutation) ParentThreadID() (id int, exists bool) {
-	if m.parent_thread != nil {
-		return *m.parent_thread, true
+// AuthorID returns the value of the "author_id" field in the mutation.
+func (m *ThreadMutation) AuthorID() (r int, exists bool) {
+	v := m.author
+	if v == nil {
+		return
 	}
-	return
+	return *v, true
 }
 
-// ParentThreadIDs returns the "parent_thread" edge IDs in the mutation.
+// OldAuthorID returns the old "author_id" field's value of the Thread entity.
+// If the Thread object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadMutation) OldAuthorID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorID: %w", err)
+	}
+	return oldValue.AuthorID, nil
+}
+
+// ClearAuthorID clears the value of the "author_id" field.
+func (m *ThreadMutation) ClearAuthorID() {
+	m.author = nil
+	m.clearedFields[thread.FieldAuthorID] = struct{}{}
+}
+
+// AuthorIDCleared returns if the "author_id" field was cleared in this mutation.
+func (m *ThreadMutation) AuthorIDCleared() bool {
+	_, ok := m.clearedFields[thread.FieldAuthorID]
+	return ok
+}
+
+// ResetAuthorID resets all changes to the "author_id" field.
+func (m *ThreadMutation) ResetAuthorID() {
+	m.author = nil
+	delete(m.clearedFields, thread.FieldAuthorID)
+}
+
+// SetParentID sets the "parent_id" field.
+func (m *ThreadMutation) SetParentID(i int) {
+	m.parent = &i
+}
+
+// ParentID returns the value of the "parent_id" field in the mutation.
+func (m *ThreadMutation) ParentID() (r int, exists bool) {
+	v := m.parent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldParentID returns the old "parent_id" field's value of the Thread entity.
+// If the Thread object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadMutation) OldParentID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldParentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldParentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldParentID: %w", err)
+	}
+	return oldValue.ParentID, nil
+}
+
+// ClearParentID clears the value of the "parent_id" field.
+func (m *ThreadMutation) ClearParentID() {
+	m.parent = nil
+	m.clearedFields[thread.FieldParentID] = struct{}{}
+}
+
+// ParentIDCleared returns if the "parent_id" field was cleared in this mutation.
+func (m *ThreadMutation) ParentIDCleared() bool {
+	_, ok := m.clearedFields[thread.FieldParentID]
+	return ok
+}
+
+// ResetParentID resets all changes to the "parent_id" field.
+func (m *ThreadMutation) ResetParentID() {
+	m.parent = nil
+	delete(m.clearedFields, thread.FieldParentID)
+}
+
+// SetRepostThreadID sets the "repost_thread_id" field.
+func (m *ThreadMutation) SetRepostThreadID(i int) {
+	m.reposted = &i
+}
+
+// RepostThreadID returns the value of the "repost_thread_id" field in the mutation.
+func (m *ThreadMutation) RepostThreadID() (r int, exists bool) {
+	v := m.reposted
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRepostThreadID returns the old "repost_thread_id" field's value of the Thread entity.
+// If the Thread object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ThreadMutation) OldRepostThreadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRepostThreadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRepostThreadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRepostThreadID: %w", err)
+	}
+	return oldValue.RepostThreadID, nil
+}
+
+// ClearRepostThreadID clears the value of the "repost_thread_id" field.
+func (m *ThreadMutation) ClearRepostThreadID() {
+	m.reposted = nil
+	m.clearedFields[thread.FieldRepostThreadID] = struct{}{}
+}
+
+// RepostThreadIDCleared returns if the "repost_thread_id" field was cleared in this mutation.
+func (m *ThreadMutation) RepostThreadIDCleared() bool {
+	_, ok := m.clearedFields[thread.FieldRepostThreadID]
+	return ok
+}
+
+// ResetRepostThreadID resets all changes to the "repost_thread_id" field.
+func (m *ThreadMutation) ResetRepostThreadID() {
+	m.reposted = nil
+	delete(m.clearedFields, thread.FieldRepostThreadID)
+}
+
+// ClearAuthor clears the "author" edge to the UserAccount entity.
+func (m *ThreadMutation) ClearAuthor() {
+	m.clearedauthor = true
+	m.clearedFields[thread.FieldAuthorID] = struct{}{}
+}
+
+// AuthorCleared reports if the "author" edge to the UserAccount entity was cleared.
+func (m *ThreadMutation) AuthorCleared() bool {
+	return m.AuthorIDCleared() || m.clearedauthor
+}
+
+// AuthorIDs returns the "author" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ParentThreadID instead. It exists only for internal usage by the builders.
-func (m *ThreadMutation) ParentThreadIDs() (ids []int) {
-	if id := m.parent_thread; id != nil {
+// AuthorID instead. It exists only for internal usage by the builders.
+func (m *ThreadMutation) AuthorIDs() (ids []int) {
+	if id := m.author; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetParentThread resets all changes to the "parent_thread" edge.
-func (m *ThreadMutation) ResetParentThread() {
-	m.parent_thread = nil
-	m.clearedparent_thread = false
+// ResetAuthor resets all changes to the "author" edge.
+func (m *ThreadMutation) ResetAuthor() {
+	m.author = nil
+	m.clearedauthor = false
 }
 
-// AddChildThreadIDs adds the "child_threads" edge to the Thread entity by ids.
-func (m *ThreadMutation) AddChildThreadIDs(ids ...int) {
-	if m.child_threads == nil {
-		m.child_threads = make(map[int]struct{})
+// ClearParent clears the "parent" edge to the Thread entity.
+func (m *ThreadMutation) ClearParent() {
+	m.clearedparent = true
+	m.clearedFields[thread.FieldParentID] = struct{}{}
+}
+
+// ParentCleared reports if the "parent" edge to the Thread entity was cleared.
+func (m *ThreadMutation) ParentCleared() bool {
+	return m.ParentIDCleared() || m.clearedparent
+}
+
+// ParentIDs returns the "parent" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentID instead. It exists only for internal usage by the builders.
+func (m *ThreadMutation) ParentIDs() (ids []int) {
+	if id := m.parent; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParent resets all changes to the "parent" edge.
+func (m *ThreadMutation) ResetParent() {
+	m.parent = nil
+	m.clearedparent = false
+}
+
+// AddChildIDs adds the "children" edge to the Thread entity by ids.
+func (m *ThreadMutation) AddChildIDs(ids ...int) {
+	if m.children == nil {
+		m.children = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.child_threads[ids[i]] = struct{}{}
+		m.children[ids[i]] = struct{}{}
 	}
 }
 
-// ClearChildThreads clears the "child_threads" edge to the Thread entity.
-func (m *ThreadMutation) ClearChildThreads() {
-	m.clearedchild_threads = true
+// ClearChildren clears the "children" edge to the Thread entity.
+func (m *ThreadMutation) ClearChildren() {
+	m.clearedchildren = true
 }
 
-// ChildThreadsCleared reports if the "child_threads" edge to the Thread entity was cleared.
-func (m *ThreadMutation) ChildThreadsCleared() bool {
-	return m.clearedchild_threads
+// ChildrenCleared reports if the "children" edge to the Thread entity was cleared.
+func (m *ThreadMutation) ChildrenCleared() bool {
+	return m.clearedchildren
 }
 
-// RemoveChildThreadIDs removes the "child_threads" edge to the Thread entity by IDs.
-func (m *ThreadMutation) RemoveChildThreadIDs(ids ...int) {
-	if m.removedchild_threads == nil {
-		m.removedchild_threads = make(map[int]struct{})
+// RemoveChildIDs removes the "children" edge to the Thread entity by IDs.
+func (m *ThreadMutation) RemoveChildIDs(ids ...int) {
+	if m.removedchildren == nil {
+		m.removedchildren = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.child_threads, ids[i])
-		m.removedchild_threads[ids[i]] = struct{}{}
+		delete(m.children, ids[i])
+		m.removedchildren[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedChildThreads returns the removed IDs of the "child_threads" edge to the Thread entity.
-func (m *ThreadMutation) RemovedChildThreadsIDs() (ids []int) {
-	for id := range m.removedchild_threads {
+// RemovedChildren returns the removed IDs of the "children" edge to the Thread entity.
+func (m *ThreadMutation) RemovedChildrenIDs() (ids []int) {
+	for id := range m.removedchildren {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ChildThreadsIDs returns the "child_threads" edge IDs in the mutation.
-func (m *ThreadMutation) ChildThreadsIDs() (ids []int) {
-	for id := range m.child_threads {
+// ChildrenIDs returns the "children" edge IDs in the mutation.
+func (m *ThreadMutation) ChildrenIDs() (ids []int) {
+	for id := range m.children {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetChildThreads resets all changes to the "child_threads" edge.
-func (m *ThreadMutation) ResetChildThreads() {
-	m.child_threads = nil
-	m.clearedchild_threads = false
-	m.removedchild_threads = nil
+// ResetChildren resets all changes to the "children" edge.
+func (m *ThreadMutation) ResetChildren() {
+	m.children = nil
+	m.clearedchildren = false
+	m.removedchildren = nil
+}
+
+// AddThreadCountIDs adds the "thread_count" edge to the ThreadCount entity by ids.
+func (m *ThreadMutation) AddThreadCountIDs(ids ...int) {
+	if m.thread_count == nil {
+		m.thread_count = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.thread_count[ids[i]] = struct{}{}
+	}
+}
+
+// ClearThreadCount clears the "thread_count" edge to the ThreadCount entity.
+func (m *ThreadMutation) ClearThreadCount() {
+	m.clearedthread_count = true
+}
+
+// ThreadCountCleared reports if the "thread_count" edge to the ThreadCount entity was cleared.
+func (m *ThreadMutation) ThreadCountCleared() bool {
+	return m.clearedthread_count
+}
+
+// RemoveThreadCountIDs removes the "thread_count" edge to the ThreadCount entity by IDs.
+func (m *ThreadMutation) RemoveThreadCountIDs(ids ...int) {
+	if m.removedthread_count == nil {
+		m.removedthread_count = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.thread_count, ids[i])
+		m.removedthread_count[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedThreadCount returns the removed IDs of the "thread_count" edge to the ThreadCount entity.
+func (m *ThreadMutation) RemovedThreadCountIDs() (ids []int) {
+	for id := range m.removedthread_count {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ThreadCountIDs returns the "thread_count" edge IDs in the mutation.
+func (m *ThreadMutation) ThreadCountIDs() (ids []int) {
+	for id := range m.thread_count {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetThreadCount resets all changes to the "thread_count" edge.
+func (m *ThreadMutation) ResetThreadCount() {
+	m.thread_count = nil
+	m.clearedthread_count = false
+	m.removedthread_count = nil
+}
+
+// SetRepostedID sets the "reposted" edge to the Thread entity by id.
+func (m *ThreadMutation) SetRepostedID(id int) {
+	m.reposted = &id
+}
+
+// ClearReposted clears the "reposted" edge to the Thread entity.
+func (m *ThreadMutation) ClearReposted() {
+	m.clearedreposted = true
+	m.clearedFields[thread.FieldRepostThreadID] = struct{}{}
+}
+
+// RepostedCleared reports if the "reposted" edge to the Thread entity was cleared.
+func (m *ThreadMutation) RepostedCleared() bool {
+	return m.RepostThreadIDCleared() || m.clearedreposted
+}
+
+// RepostedID returns the "reposted" edge ID in the mutation.
+func (m *ThreadMutation) RepostedID() (id int, exists bool) {
+	if m.reposted != nil {
+		return *m.reposted, true
+	}
+	return
+}
+
+// RepostedIDs returns the "reposted" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RepostedID instead. It exists only for internal usage by the builders.
+func (m *ThreadMutation) RepostedIDs() (ids []int) {
+	if id := m.reposted; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetReposted resets all changes to the "reposted" edge.
+func (m *ThreadMutation) ResetReposted() {
+	m.reposted = nil
+	m.clearedreposted = false
+}
+
+// SetRepostID sets the "repost" edge to the Thread entity by id.
+func (m *ThreadMutation) SetRepostID(id int) {
+	m.repost = &id
+}
+
+// ClearRepost clears the "repost" edge to the Thread entity.
+func (m *ThreadMutation) ClearRepost() {
+	m.clearedrepost = true
+}
+
+// RepostCleared reports if the "repost" edge to the Thread entity was cleared.
+func (m *ThreadMutation) RepostCleared() bool {
+	return m.clearedrepost
+}
+
+// RepostID returns the "repost" edge ID in the mutation.
+func (m *ThreadMutation) RepostID() (id int, exists bool) {
+	if m.repost != nil {
+		return *m.repost, true
+	}
+	return
+}
+
+// RepostIDs returns the "repost" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RepostID instead. It exists only for internal usage by the builders.
+func (m *ThreadMutation) RepostIDs() (ids []int) {
+	if id := m.repost; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRepost resets all changes to the "repost" edge.
+func (m *ThreadMutation) ResetRepost() {
+	m.repost = nil
+	m.clearedrepost = false
 }
 
 // AddImageIDs adds the "images" edge to the Media entity by ids.
@@ -1159,7 +2188,13 @@ func (m *ThreadMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ThreadMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 10)
+	if m.created_at != nil {
+		fields = append(fields, thread.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, thread.FieldUpdatedAt)
+	}
 	if m.content != nil {
 		fields = append(fields, thread.FieldContent)
 	}
@@ -1175,6 +2210,15 @@ func (m *ThreadMutation) Fields() []string {
 	if m.is_deleted != nil {
 		fields = append(fields, thread.FieldIsDeleted)
 	}
+	if m.author != nil {
+		fields = append(fields, thread.FieldAuthorID)
+	}
+	if m.parent != nil {
+		fields = append(fields, thread.FieldParentID)
+	}
+	if m.reposted != nil {
+		fields = append(fields, thread.FieldRepostThreadID)
+	}
 	return fields
 }
 
@@ -1183,6 +2227,10 @@ func (m *ThreadMutation) Fields() []string {
 // schema.
 func (m *ThreadMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case thread.FieldCreatedAt:
+		return m.CreatedAt()
+	case thread.FieldUpdatedAt:
+		return m.UpdatedAt()
 	case thread.FieldContent:
 		return m.Content()
 	case thread.FieldIsCommentDisabled:
@@ -1193,6 +2241,12 @@ func (m *ThreadMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case thread.FieldIsDeleted:
 		return m.IsDeleted()
+	case thread.FieldAuthorID:
+		return m.AuthorID()
+	case thread.FieldParentID:
+		return m.ParentID()
+	case thread.FieldRepostThreadID:
+		return m.RepostThreadID()
 	}
 	return nil, false
 }
@@ -1202,6 +2256,10 @@ func (m *ThreadMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ThreadMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case thread.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case thread.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	case thread.FieldContent:
 		return m.OldContent(ctx)
 	case thread.FieldIsCommentDisabled:
@@ -1212,6 +2270,12 @@ func (m *ThreadMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldStatus(ctx)
 	case thread.FieldIsDeleted:
 		return m.OldIsDeleted(ctx)
+	case thread.FieldAuthorID:
+		return m.OldAuthorID(ctx)
+	case thread.FieldParentID:
+		return m.OldParentID(ctx)
+	case thread.FieldRepostThreadID:
+		return m.OldRepostThreadID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Thread field %s", name)
 }
@@ -1221,6 +2285,20 @@ func (m *ThreadMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *ThreadMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case thread.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case thread.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
 	case thread.FieldContent:
 		v, ok := value.(string)
 		if !ok {
@@ -1256,6 +2334,27 @@ func (m *ThreadMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIsDeleted(v)
 		return nil
+	case thread.FieldAuthorID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorID(v)
+		return nil
+	case thread.FieldParentID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetParentID(v)
+		return nil
+	case thread.FieldRepostThreadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRepostThreadID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Thread field %s", name)
 }
@@ -1263,13 +2362,16 @@ func (m *ThreadMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ThreadMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ThreadMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
 	return nil, false
 }
 
@@ -1285,7 +2387,17 @@ func (m *ThreadMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ThreadMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(thread.FieldAuthorID) {
+		fields = append(fields, thread.FieldAuthorID)
+	}
+	if m.FieldCleared(thread.FieldParentID) {
+		fields = append(fields, thread.FieldParentID)
+	}
+	if m.FieldCleared(thread.FieldRepostThreadID) {
+		fields = append(fields, thread.FieldRepostThreadID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1298,6 +2410,17 @@ func (m *ThreadMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ThreadMutation) ClearField(name string) error {
+	switch name {
+	case thread.FieldAuthorID:
+		m.ClearAuthorID()
+		return nil
+	case thread.FieldParentID:
+		m.ClearParentID()
+		return nil
+	case thread.FieldRepostThreadID:
+		m.ClearRepostThreadID()
+		return nil
+	}
 	return fmt.Errorf("unknown Thread nullable field %s", name)
 }
 
@@ -1305,6 +2428,12 @@ func (m *ThreadMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ThreadMutation) ResetField(name string) error {
 	switch name {
+	case thread.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case thread.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
 	case thread.FieldContent:
 		m.ResetContent()
 		return nil
@@ -1320,18 +2449,39 @@ func (m *ThreadMutation) ResetField(name string) error {
 	case thread.FieldIsDeleted:
 		m.ResetIsDeleted()
 		return nil
+	case thread.FieldAuthorID:
+		m.ResetAuthorID()
+		return nil
+	case thread.FieldParentID:
+		m.ResetParentID()
+		return nil
+	case thread.FieldRepostThreadID:
+		m.ResetRepostThreadID()
+		return nil
 	}
 	return fmt.Errorf("unknown Thread field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ThreadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
-	if m.parent_thread != nil {
-		edges = append(edges, thread.EdgeParentThread)
+	edges := make([]string, 0, 7)
+	if m.author != nil {
+		edges = append(edges, thread.EdgeAuthor)
 	}
-	if m.child_threads != nil {
-		edges = append(edges, thread.EdgeChildThreads)
+	if m.parent != nil {
+		edges = append(edges, thread.EdgeParent)
+	}
+	if m.children != nil {
+		edges = append(edges, thread.EdgeChildren)
+	}
+	if m.thread_count != nil {
+		edges = append(edges, thread.EdgeThreadCount)
+	}
+	if m.reposted != nil {
+		edges = append(edges, thread.EdgeReposted)
+	}
+	if m.repost != nil {
+		edges = append(edges, thread.EdgeRepost)
 	}
 	if m.images != nil {
 		edges = append(edges, thread.EdgeImages)
@@ -1343,16 +2493,34 @@ func (m *ThreadMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ThreadMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case thread.EdgeParentThread:
-		if id := m.parent_thread; id != nil {
+	case thread.EdgeAuthor:
+		if id := m.author; id != nil {
 			return []ent.Value{*id}
 		}
-	case thread.EdgeChildThreads:
-		ids := make([]ent.Value, 0, len(m.child_threads))
-		for id := range m.child_threads {
+	case thread.EdgeParent:
+		if id := m.parent; id != nil {
+			return []ent.Value{*id}
+		}
+	case thread.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.children))
+		for id := range m.children {
 			ids = append(ids, id)
 		}
 		return ids
+	case thread.EdgeThreadCount:
+		ids := make([]ent.Value, 0, len(m.thread_count))
+		for id := range m.thread_count {
+			ids = append(ids, id)
+		}
+		return ids
+	case thread.EdgeReposted:
+		if id := m.reposted; id != nil {
+			return []ent.Value{*id}
+		}
+	case thread.EdgeRepost:
+		if id := m.repost; id != nil {
+			return []ent.Value{*id}
+		}
 	case thread.EdgeImages:
 		ids := make([]ent.Value, 0, len(m.images))
 		for id := range m.images {
@@ -1365,9 +2533,12 @@ func (m *ThreadMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ThreadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
-	if m.removedchild_threads != nil {
-		edges = append(edges, thread.EdgeChildThreads)
+	edges := make([]string, 0, 7)
+	if m.removedchildren != nil {
+		edges = append(edges, thread.EdgeChildren)
+	}
+	if m.removedthread_count != nil {
+		edges = append(edges, thread.EdgeThreadCount)
 	}
 	if m.removedimages != nil {
 		edges = append(edges, thread.EdgeImages)
@@ -1379,9 +2550,15 @@ func (m *ThreadMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *ThreadMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case thread.EdgeChildThreads:
-		ids := make([]ent.Value, 0, len(m.removedchild_threads))
-		for id := range m.removedchild_threads {
+	case thread.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.removedchildren))
+		for id := range m.removedchildren {
+			ids = append(ids, id)
+		}
+		return ids
+	case thread.EdgeThreadCount:
+		ids := make([]ent.Value, 0, len(m.removedthread_count))
+		for id := range m.removedthread_count {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1397,12 +2574,24 @@ func (m *ThreadMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ThreadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
-	if m.clearedparent_thread {
-		edges = append(edges, thread.EdgeParentThread)
+	edges := make([]string, 0, 7)
+	if m.clearedauthor {
+		edges = append(edges, thread.EdgeAuthor)
 	}
-	if m.clearedchild_threads {
-		edges = append(edges, thread.EdgeChildThreads)
+	if m.clearedparent {
+		edges = append(edges, thread.EdgeParent)
+	}
+	if m.clearedchildren {
+		edges = append(edges, thread.EdgeChildren)
+	}
+	if m.clearedthread_count {
+		edges = append(edges, thread.EdgeThreadCount)
+	}
+	if m.clearedreposted {
+		edges = append(edges, thread.EdgeReposted)
+	}
+	if m.clearedrepost {
+		edges = append(edges, thread.EdgeRepost)
 	}
 	if m.clearedimages {
 		edges = append(edges, thread.EdgeImages)
@@ -1414,10 +2603,18 @@ func (m *ThreadMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ThreadMutation) EdgeCleared(name string) bool {
 	switch name {
-	case thread.EdgeParentThread:
-		return m.clearedparent_thread
-	case thread.EdgeChildThreads:
-		return m.clearedchild_threads
+	case thread.EdgeAuthor:
+		return m.clearedauthor
+	case thread.EdgeParent:
+		return m.clearedparent
+	case thread.EdgeChildren:
+		return m.clearedchildren
+	case thread.EdgeThreadCount:
+		return m.clearedthread_count
+	case thread.EdgeReposted:
+		return m.clearedreposted
+	case thread.EdgeRepost:
+		return m.clearedrepost
 	case thread.EdgeImages:
 		return m.clearedimages
 	}
@@ -1428,8 +2625,17 @@ func (m *ThreadMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *ThreadMutation) ClearEdge(name string) error {
 	switch name {
-	case thread.EdgeParentThread:
-		m.ClearParentThread()
+	case thread.EdgeAuthor:
+		m.ClearAuthor()
+		return nil
+	case thread.EdgeParent:
+		m.ClearParent()
+		return nil
+	case thread.EdgeReposted:
+		m.ClearReposted()
+		return nil
+	case thread.EdgeRepost:
+		m.ClearRepost()
 		return nil
 	}
 	return fmt.Errorf("unknown Thread unique edge %s", name)
@@ -1439,11 +2645,23 @@ func (m *ThreadMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ThreadMutation) ResetEdge(name string) error {
 	switch name {
-	case thread.EdgeParentThread:
-		m.ResetParentThread()
+	case thread.EdgeAuthor:
+		m.ResetAuthor()
 		return nil
-	case thread.EdgeChildThreads:
-		m.ResetChildThreads()
+	case thread.EdgeParent:
+		m.ResetParent()
+		return nil
+	case thread.EdgeChildren:
+		m.ResetChildren()
+		return nil
+	case thread.EdgeThreadCount:
+		m.ResetThreadCount()
+		return nil
+	case thread.EdgeReposted:
+		m.ResetReposted()
+		return nil
+	case thread.EdgeRepost:
+		m.ResetRepost()
 		return nil
 	case thread.EdgeImages:
 		m.ResetImages()
@@ -1463,6 +2681,8 @@ type ThreadCountMutation struct {
 	like_count     *int
 	addlike_count  *int
 	clearedFields  map[string]struct{}
+	thread         *int
+	clearedthread  bool
 	done           bool
 	oldValue       func(context.Context) (*ThreadCount, error)
 	predicates     []predicate.ThreadCount
@@ -1678,6 +2898,45 @@ func (m *ThreadCountMutation) ResetLikeCount() {
 	m.addlike_count = nil
 }
 
+// SetThreadID sets the "thread" edge to the Thread entity by id.
+func (m *ThreadCountMutation) SetThreadID(id int) {
+	m.thread = &id
+}
+
+// ClearThread clears the "thread" edge to the Thread entity.
+func (m *ThreadCountMutation) ClearThread() {
+	m.clearedthread = true
+}
+
+// ThreadCleared reports if the "thread" edge to the Thread entity was cleared.
+func (m *ThreadCountMutation) ThreadCleared() bool {
+	return m.clearedthread
+}
+
+// ThreadID returns the "thread" edge ID in the mutation.
+func (m *ThreadCountMutation) ThreadID() (id int, exists bool) {
+	if m.thread != nil {
+		return *m.thread, true
+	}
+	return
+}
+
+// ThreadIDs returns the "thread" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ThreadID instead. It exists only for internal usage by the builders.
+func (m *ThreadCountMutation) ThreadIDs() (ids []int) {
+	if id := m.thread; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetThread resets all changes to the "thread" edge.
+func (m *ThreadCountMutation) ResetThread() {
+	m.thread = nil
+	m.clearedthread = false
+}
+
 // Where appends a list predicates to the ThreadCountMutation builder.
 func (m *ThreadCountMutation) Where(ps ...predicate.ThreadCount) {
 	m.predicates = append(m.predicates, ps...)
@@ -1855,19 +3114,28 @@ func (m *ThreadCountMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ThreadCountMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.thread != nil {
+		edges = append(edges, threadcount.EdgeThread)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *ThreadCountMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case threadcount.EdgeThread:
+		if id := m.thread; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ThreadCountMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -1879,60 +3147,344 @@ func (m *ThreadCountMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ThreadCountMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedthread {
+		edges = append(edges, threadcount.EdgeThread)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *ThreadCountMutation) EdgeCleared(name string) bool {
+	switch name {
+	case threadcount.EdgeThread:
+		return m.clearedthread
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *ThreadCountMutation) ClearEdge(name string) error {
+	switch name {
+	case threadcount.EdgeThread:
+		m.ClearThread()
+		return nil
+	}
 	return fmt.Errorf("unknown ThreadCount unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *ThreadCountMutation) ResetEdge(name string) error {
+	switch name {
+	case threadcount.EdgeThread:
+		m.ResetThread()
+		return nil
+	}
 	return fmt.Errorf("unknown ThreadCount edge %s", name)
+}
+
+// ThreadLikeUserMutation represents an operation that mutates the ThreadLikeUser nodes in the graph.
+type ThreadLikeUserMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*ThreadLikeUser, error)
+	predicates    []predicate.ThreadLikeUser
+}
+
+var _ ent.Mutation = (*ThreadLikeUserMutation)(nil)
+
+// threadlikeuserOption allows management of the mutation configuration using functional options.
+type threadlikeuserOption func(*ThreadLikeUserMutation)
+
+// newThreadLikeUserMutation creates new mutation for the ThreadLikeUser entity.
+func newThreadLikeUserMutation(c config, op Op, opts ...threadlikeuserOption) *ThreadLikeUserMutation {
+	m := &ThreadLikeUserMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeThreadLikeUser,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withThreadLikeUserID sets the ID field of the mutation.
+func withThreadLikeUserID(id int) threadlikeuserOption {
+	return func(m *ThreadLikeUserMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ThreadLikeUser
+		)
+		m.oldValue = func(ctx context.Context) (*ThreadLikeUser, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ThreadLikeUser.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withThreadLikeUser sets the old ThreadLikeUser of the mutation.
+func withThreadLikeUser(node *ThreadLikeUser) threadlikeuserOption {
+	return func(m *ThreadLikeUserMutation) {
+		m.oldValue = func(context.Context) (*ThreadLikeUser, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ThreadLikeUserMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ThreadLikeUserMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ThreadLikeUserMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ThreadLikeUserMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ThreadLikeUser.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// Where appends a list predicates to the ThreadLikeUserMutation builder.
+func (m *ThreadLikeUserMutation) Where(ps ...predicate.ThreadLikeUser) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ThreadLikeUserMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ThreadLikeUserMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ThreadLikeUser, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ThreadLikeUserMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ThreadLikeUserMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ThreadLikeUser).
+func (m *ThreadLikeUserMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ThreadLikeUserMutation) Fields() []string {
+	fields := make([]string, 0, 0)
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ThreadLikeUserMutation) Field(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ThreadLikeUserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, fmt.Errorf("unknown ThreadLikeUser field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ThreadLikeUserMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ThreadLikeUser field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ThreadLikeUserMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ThreadLikeUserMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ThreadLikeUserMutation) AddField(name string, value ent.Value) error {
+	return fmt.Errorf("unknown ThreadLikeUser numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ThreadLikeUserMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ThreadLikeUserMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ThreadLikeUserMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ThreadLikeUser nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ThreadLikeUserMutation) ResetField(name string) error {
+	return fmt.Errorf("unknown ThreadLikeUser field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ThreadLikeUserMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ThreadLikeUserMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ThreadLikeUserMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ThreadLikeUserMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ThreadLikeUserMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ThreadLikeUserMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ThreadLikeUserMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ThreadLikeUser unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ThreadLikeUserMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ThreadLikeUser edge %s", name)
 }
 
 // UserAccountMutation represents an operation that mutates the UserAccount nodes in the graph.
 type UserAccountMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *int
-	email                  *string
-	username               *string
-	password               *string
-	is_verified            *bool
-	is_private             *bool
-	is_email_verified      *bool
-	clearedFields          map[string]struct{}
-	profile                *int
-	clearedprofile         bool
-	followers              map[int]struct{}
-	removedfollowers       map[int]struct{}
-	clearedfollowers       bool
-	following              map[int]struct{}
-	removedfollowing       map[int]struct{}
-	clearedfollowing       bool
-	blocked_by             map[int]struct{}
-	removedblocked_by      map[int]struct{}
-	clearedblocked_by      bool
-	blocked_user           map[int]struct{}
-	removedblocked_user    map[int]struct{}
-	clearedblocked_user    bool
-	user_count_info        *int
-	cleareduser_count_info bool
-	done                   bool
-	oldValue               func(context.Context) (*UserAccount, error)
-	predicates             []predicate.UserAccount
+	op                   Op
+	typ                  string
+	id                   *int
+	email                *string
+	username             *string
+	password             *string
+	is_verified          *bool
+	is_private           *bool
+	is_email_verified    *bool
+	clearedFields        map[string]struct{}
+	profile              *int
+	clearedprofile       bool
+	followers            map[int]struct{}
+	removedfollowers     map[int]struct{}
+	clearedfollowers     bool
+	followings           map[int]struct{}
+	removedfollowings    map[int]struct{}
+	clearedfollowings    bool
+	blocked_by           map[int]struct{}
+	removedblocked_by    map[int]struct{}
+	clearedblocked_by    bool
+	blocked_users        map[int]struct{}
+	removedblocked_users map[int]struct{}
+	clearedblocked_users bool
+	user_count           *int
+	cleareduser_count    bool
+	threads              map[int]struct{}
+	removedthreads       map[int]struct{}
+	clearedthreads       bool
+	done                 bool
+	oldValue             func(context.Context) (*UserAccount, error)
+	predicates           []predicate.UserAccount
 }
 
 var _ ent.Mutation = (*UserAccountMutation)(nil)
@@ -2288,7 +3840,7 @@ func (m *UserAccountMutation) ResetProfile() {
 	m.clearedprofile = false
 }
 
-// AddFollowerIDs adds the "followers" edge to the UserAccount entity by ids.
+// AddFollowerIDs adds the "followers" edge to the UserFollowerRelationship entity by ids.
 func (m *UserAccountMutation) AddFollowerIDs(ids ...int) {
 	if m.followers == nil {
 		m.followers = make(map[int]struct{})
@@ -2298,17 +3850,17 @@ func (m *UserAccountMutation) AddFollowerIDs(ids ...int) {
 	}
 }
 
-// ClearFollowers clears the "followers" edge to the UserAccount entity.
+// ClearFollowers clears the "followers" edge to the UserFollowerRelationship entity.
 func (m *UserAccountMutation) ClearFollowers() {
 	m.clearedfollowers = true
 }
 
-// FollowersCleared reports if the "followers" edge to the UserAccount entity was cleared.
+// FollowersCleared reports if the "followers" edge to the UserFollowerRelationship entity was cleared.
 func (m *UserAccountMutation) FollowersCleared() bool {
 	return m.clearedfollowers
 }
 
-// RemoveFollowerIDs removes the "followers" edge to the UserAccount entity by IDs.
+// RemoveFollowerIDs removes the "followers" edge to the UserFollowerRelationship entity by IDs.
 func (m *UserAccountMutation) RemoveFollowerIDs(ids ...int) {
 	if m.removedfollowers == nil {
 		m.removedfollowers = make(map[int]struct{})
@@ -2319,7 +3871,7 @@ func (m *UserAccountMutation) RemoveFollowerIDs(ids ...int) {
 	}
 }
 
-// RemovedFollowers returns the removed IDs of the "followers" edge to the UserAccount entity.
+// RemovedFollowers returns the removed IDs of the "followers" edge to the UserFollowerRelationship entity.
 func (m *UserAccountMutation) RemovedFollowersIDs() (ids []int) {
 	for id := range m.removedfollowers {
 		ids = append(ids, id)
@@ -2342,61 +3894,61 @@ func (m *UserAccountMutation) ResetFollowers() {
 	m.removedfollowers = nil
 }
 
-// AddFollowingIDs adds the "following" edge to the UserAccount entity by ids.
+// AddFollowingIDs adds the "followings" edge to the UserFollowerRelationship entity by ids.
 func (m *UserAccountMutation) AddFollowingIDs(ids ...int) {
-	if m.following == nil {
-		m.following = make(map[int]struct{})
+	if m.followings == nil {
+		m.followings = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.following[ids[i]] = struct{}{}
+		m.followings[ids[i]] = struct{}{}
 	}
 }
 
-// ClearFollowing clears the "following" edge to the UserAccount entity.
-func (m *UserAccountMutation) ClearFollowing() {
-	m.clearedfollowing = true
+// ClearFollowings clears the "followings" edge to the UserFollowerRelationship entity.
+func (m *UserAccountMutation) ClearFollowings() {
+	m.clearedfollowings = true
 }
 
-// FollowingCleared reports if the "following" edge to the UserAccount entity was cleared.
-func (m *UserAccountMutation) FollowingCleared() bool {
-	return m.clearedfollowing
+// FollowingsCleared reports if the "followings" edge to the UserFollowerRelationship entity was cleared.
+func (m *UserAccountMutation) FollowingsCleared() bool {
+	return m.clearedfollowings
 }
 
-// RemoveFollowingIDs removes the "following" edge to the UserAccount entity by IDs.
+// RemoveFollowingIDs removes the "followings" edge to the UserFollowerRelationship entity by IDs.
 func (m *UserAccountMutation) RemoveFollowingIDs(ids ...int) {
-	if m.removedfollowing == nil {
-		m.removedfollowing = make(map[int]struct{})
+	if m.removedfollowings == nil {
+		m.removedfollowings = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.following, ids[i])
-		m.removedfollowing[ids[i]] = struct{}{}
+		delete(m.followings, ids[i])
+		m.removedfollowings[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedFollowing returns the removed IDs of the "following" edge to the UserAccount entity.
-func (m *UserAccountMutation) RemovedFollowingIDs() (ids []int) {
-	for id := range m.removedfollowing {
+// RemovedFollowings returns the removed IDs of the "followings" edge to the UserFollowerRelationship entity.
+func (m *UserAccountMutation) RemovedFollowingsIDs() (ids []int) {
+	for id := range m.removedfollowings {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// FollowingIDs returns the "following" edge IDs in the mutation.
-func (m *UserAccountMutation) FollowingIDs() (ids []int) {
-	for id := range m.following {
+// FollowingsIDs returns the "followings" edge IDs in the mutation.
+func (m *UserAccountMutation) FollowingsIDs() (ids []int) {
+	for id := range m.followings {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetFollowing resets all changes to the "following" edge.
-func (m *UserAccountMutation) ResetFollowing() {
-	m.following = nil
-	m.clearedfollowing = false
-	m.removedfollowing = nil
+// ResetFollowings resets all changes to the "followings" edge.
+func (m *UserAccountMutation) ResetFollowings() {
+	m.followings = nil
+	m.clearedfollowings = false
+	m.removedfollowings = nil
 }
 
-// AddBlockedByIDs adds the "blocked_by" edge to the UserAccount entity by ids.
+// AddBlockedByIDs adds the "blocked_by" edge to the BlockedUsersRelationship entity by ids.
 func (m *UserAccountMutation) AddBlockedByIDs(ids ...int) {
 	if m.blocked_by == nil {
 		m.blocked_by = make(map[int]struct{})
@@ -2406,17 +3958,17 @@ func (m *UserAccountMutation) AddBlockedByIDs(ids ...int) {
 	}
 }
 
-// ClearBlockedBy clears the "blocked_by" edge to the UserAccount entity.
+// ClearBlockedBy clears the "blocked_by" edge to the BlockedUsersRelationship entity.
 func (m *UserAccountMutation) ClearBlockedBy() {
 	m.clearedblocked_by = true
 }
 
-// BlockedByCleared reports if the "blocked_by" edge to the UserAccount entity was cleared.
+// BlockedByCleared reports if the "blocked_by" edge to the BlockedUsersRelationship entity was cleared.
 func (m *UserAccountMutation) BlockedByCleared() bool {
 	return m.clearedblocked_by
 }
 
-// RemoveBlockedByIDs removes the "blocked_by" edge to the UserAccount entity by IDs.
+// RemoveBlockedByIDs removes the "blocked_by" edge to the BlockedUsersRelationship entity by IDs.
 func (m *UserAccountMutation) RemoveBlockedByIDs(ids ...int) {
 	if m.removedblocked_by == nil {
 		m.removedblocked_by = make(map[int]struct{})
@@ -2427,7 +3979,7 @@ func (m *UserAccountMutation) RemoveBlockedByIDs(ids ...int) {
 	}
 }
 
-// RemovedBlockedBy returns the removed IDs of the "blocked_by" edge to the UserAccount entity.
+// RemovedBlockedBy returns the removed IDs of the "blocked_by" edge to the BlockedUsersRelationship entity.
 func (m *UserAccountMutation) RemovedBlockedByIDs() (ids []int) {
 	for id := range m.removedblocked_by {
 		ids = append(ids, id)
@@ -2450,97 +4002,151 @@ func (m *UserAccountMutation) ResetBlockedBy() {
 	m.removedblocked_by = nil
 }
 
-// AddBlockedUserIDs adds the "blocked_user" edge to the UserAccount entity by ids.
+// AddBlockedUserIDs adds the "blocked_users" edge to the BlockedUsersRelationship entity by ids.
 func (m *UserAccountMutation) AddBlockedUserIDs(ids ...int) {
-	if m.blocked_user == nil {
-		m.blocked_user = make(map[int]struct{})
+	if m.blocked_users == nil {
+		m.blocked_users = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.blocked_user[ids[i]] = struct{}{}
+		m.blocked_users[ids[i]] = struct{}{}
 	}
 }
 
-// ClearBlockedUser clears the "blocked_user" edge to the UserAccount entity.
-func (m *UserAccountMutation) ClearBlockedUser() {
-	m.clearedblocked_user = true
+// ClearBlockedUsers clears the "blocked_users" edge to the BlockedUsersRelationship entity.
+func (m *UserAccountMutation) ClearBlockedUsers() {
+	m.clearedblocked_users = true
 }
 
-// BlockedUserCleared reports if the "blocked_user" edge to the UserAccount entity was cleared.
-func (m *UserAccountMutation) BlockedUserCleared() bool {
-	return m.clearedblocked_user
+// BlockedUsersCleared reports if the "blocked_users" edge to the BlockedUsersRelationship entity was cleared.
+func (m *UserAccountMutation) BlockedUsersCleared() bool {
+	return m.clearedblocked_users
 }
 
-// RemoveBlockedUserIDs removes the "blocked_user" edge to the UserAccount entity by IDs.
+// RemoveBlockedUserIDs removes the "blocked_users" edge to the BlockedUsersRelationship entity by IDs.
 func (m *UserAccountMutation) RemoveBlockedUserIDs(ids ...int) {
-	if m.removedblocked_user == nil {
-		m.removedblocked_user = make(map[int]struct{})
+	if m.removedblocked_users == nil {
+		m.removedblocked_users = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.blocked_user, ids[i])
-		m.removedblocked_user[ids[i]] = struct{}{}
+		delete(m.blocked_users, ids[i])
+		m.removedblocked_users[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedBlockedUser returns the removed IDs of the "blocked_user" edge to the UserAccount entity.
-func (m *UserAccountMutation) RemovedBlockedUserIDs() (ids []int) {
-	for id := range m.removedblocked_user {
+// RemovedBlockedUsers returns the removed IDs of the "blocked_users" edge to the BlockedUsersRelationship entity.
+func (m *UserAccountMutation) RemovedBlockedUsersIDs() (ids []int) {
+	for id := range m.removedblocked_users {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// BlockedUserIDs returns the "blocked_user" edge IDs in the mutation.
-func (m *UserAccountMutation) BlockedUserIDs() (ids []int) {
-	for id := range m.blocked_user {
+// BlockedUsersIDs returns the "blocked_users" edge IDs in the mutation.
+func (m *UserAccountMutation) BlockedUsersIDs() (ids []int) {
+	for id := range m.blocked_users {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetBlockedUser resets all changes to the "blocked_user" edge.
-func (m *UserAccountMutation) ResetBlockedUser() {
-	m.blocked_user = nil
-	m.clearedblocked_user = false
-	m.removedblocked_user = nil
+// ResetBlockedUsers resets all changes to the "blocked_users" edge.
+func (m *UserAccountMutation) ResetBlockedUsers() {
+	m.blocked_users = nil
+	m.clearedblocked_users = false
+	m.removedblocked_users = nil
 }
 
-// SetUserCountInfoID sets the "user_count_info" edge to the UserCount entity by id.
-func (m *UserAccountMutation) SetUserCountInfoID(id int) {
-	m.user_count_info = &id
+// SetUserCountID sets the "user_count" edge to the UserCount entity by id.
+func (m *UserAccountMutation) SetUserCountID(id int) {
+	m.user_count = &id
 }
 
-// ClearUserCountInfo clears the "user_count_info" edge to the UserCount entity.
-func (m *UserAccountMutation) ClearUserCountInfo() {
-	m.cleareduser_count_info = true
+// ClearUserCount clears the "user_count" edge to the UserCount entity.
+func (m *UserAccountMutation) ClearUserCount() {
+	m.cleareduser_count = true
 }
 
-// UserCountInfoCleared reports if the "user_count_info" edge to the UserCount entity was cleared.
-func (m *UserAccountMutation) UserCountInfoCleared() bool {
-	return m.cleareduser_count_info
+// UserCountCleared reports if the "user_count" edge to the UserCount entity was cleared.
+func (m *UserAccountMutation) UserCountCleared() bool {
+	return m.cleareduser_count
 }
 
-// UserCountInfoID returns the "user_count_info" edge ID in the mutation.
-func (m *UserAccountMutation) UserCountInfoID() (id int, exists bool) {
-	if m.user_count_info != nil {
-		return *m.user_count_info, true
+// UserCountID returns the "user_count" edge ID in the mutation.
+func (m *UserAccountMutation) UserCountID() (id int, exists bool) {
+	if m.user_count != nil {
+		return *m.user_count, true
 	}
 	return
 }
 
-// UserCountInfoIDs returns the "user_count_info" edge IDs in the mutation.
+// UserCountIDs returns the "user_count" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// UserCountInfoID instead. It exists only for internal usage by the builders.
-func (m *UserAccountMutation) UserCountInfoIDs() (ids []int) {
-	if id := m.user_count_info; id != nil {
+// UserCountID instead. It exists only for internal usage by the builders.
+func (m *UserAccountMutation) UserCountIDs() (ids []int) {
+	if id := m.user_count; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetUserCountInfo resets all changes to the "user_count_info" edge.
-func (m *UserAccountMutation) ResetUserCountInfo() {
-	m.user_count_info = nil
-	m.cleareduser_count_info = false
+// ResetUserCount resets all changes to the "user_count" edge.
+func (m *UserAccountMutation) ResetUserCount() {
+	m.user_count = nil
+	m.cleareduser_count = false
+}
+
+// AddThreadIDs adds the "threads" edge to the Thread entity by ids.
+func (m *UserAccountMutation) AddThreadIDs(ids ...int) {
+	if m.threads == nil {
+		m.threads = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.threads[ids[i]] = struct{}{}
+	}
+}
+
+// ClearThreads clears the "threads" edge to the Thread entity.
+func (m *UserAccountMutation) ClearThreads() {
+	m.clearedthreads = true
+}
+
+// ThreadsCleared reports if the "threads" edge to the Thread entity was cleared.
+func (m *UserAccountMutation) ThreadsCleared() bool {
+	return m.clearedthreads
+}
+
+// RemoveThreadIDs removes the "threads" edge to the Thread entity by IDs.
+func (m *UserAccountMutation) RemoveThreadIDs(ids ...int) {
+	if m.removedthreads == nil {
+		m.removedthreads = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.threads, ids[i])
+		m.removedthreads[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedThreads returns the removed IDs of the "threads" edge to the Thread entity.
+func (m *UserAccountMutation) RemovedThreadsIDs() (ids []int) {
+	for id := range m.removedthreads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ThreadsIDs returns the "threads" edge IDs in the mutation.
+func (m *UserAccountMutation) ThreadsIDs() (ids []int) {
+	for id := range m.threads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetThreads resets all changes to the "threads" edge.
+func (m *UserAccountMutation) ResetThreads() {
+	m.threads = nil
+	m.clearedthreads = false
+	m.removedthreads = nil
 }
 
 // Where appends a list predicates to the UserAccountMutation builder.
@@ -2761,24 +4367,27 @@ func (m *UserAccountMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserAccountMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.profile != nil {
 		edges = append(edges, useraccount.EdgeProfile)
 	}
 	if m.followers != nil {
 		edges = append(edges, useraccount.EdgeFollowers)
 	}
-	if m.following != nil {
-		edges = append(edges, useraccount.EdgeFollowing)
+	if m.followings != nil {
+		edges = append(edges, useraccount.EdgeFollowings)
 	}
 	if m.blocked_by != nil {
 		edges = append(edges, useraccount.EdgeBlockedBy)
 	}
-	if m.blocked_user != nil {
-		edges = append(edges, useraccount.EdgeBlockedUser)
+	if m.blocked_users != nil {
+		edges = append(edges, useraccount.EdgeBlockedUsers)
 	}
-	if m.user_count_info != nil {
-		edges = append(edges, useraccount.EdgeUserCountInfo)
+	if m.user_count != nil {
+		edges = append(edges, useraccount.EdgeUserCount)
+	}
+	if m.threads != nil {
+		edges = append(edges, useraccount.EdgeThreads)
 	}
 	return edges
 }
@@ -2797,9 +4406,9 @@ func (m *UserAccountMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case useraccount.EdgeFollowing:
-		ids := make([]ent.Value, 0, len(m.following))
-		for id := range m.following {
+	case useraccount.EdgeFollowings:
+		ids := make([]ent.Value, 0, len(m.followings))
+		for id := range m.followings {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2809,34 +4418,43 @@ func (m *UserAccountMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case useraccount.EdgeBlockedUser:
-		ids := make([]ent.Value, 0, len(m.blocked_user))
-		for id := range m.blocked_user {
+	case useraccount.EdgeBlockedUsers:
+		ids := make([]ent.Value, 0, len(m.blocked_users))
+		for id := range m.blocked_users {
 			ids = append(ids, id)
 		}
 		return ids
-	case useraccount.EdgeUserCountInfo:
-		if id := m.user_count_info; id != nil {
+	case useraccount.EdgeUserCount:
+		if id := m.user_count; id != nil {
 			return []ent.Value{*id}
 		}
+	case useraccount.EdgeThreads:
+		ids := make([]ent.Value, 0, len(m.threads))
+		for id := range m.threads {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserAccountMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.removedfollowers != nil {
 		edges = append(edges, useraccount.EdgeFollowers)
 	}
-	if m.removedfollowing != nil {
-		edges = append(edges, useraccount.EdgeFollowing)
+	if m.removedfollowings != nil {
+		edges = append(edges, useraccount.EdgeFollowings)
 	}
 	if m.removedblocked_by != nil {
 		edges = append(edges, useraccount.EdgeBlockedBy)
 	}
-	if m.removedblocked_user != nil {
-		edges = append(edges, useraccount.EdgeBlockedUser)
+	if m.removedblocked_users != nil {
+		edges = append(edges, useraccount.EdgeBlockedUsers)
+	}
+	if m.removedthreads != nil {
+		edges = append(edges, useraccount.EdgeThreads)
 	}
 	return edges
 }
@@ -2851,9 +4469,9 @@ func (m *UserAccountMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case useraccount.EdgeFollowing:
-		ids := make([]ent.Value, 0, len(m.removedfollowing))
-		for id := range m.removedfollowing {
+	case useraccount.EdgeFollowings:
+		ids := make([]ent.Value, 0, len(m.removedfollowings))
+		for id := range m.removedfollowings {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2863,9 +4481,15 @@ func (m *UserAccountMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case useraccount.EdgeBlockedUser:
-		ids := make([]ent.Value, 0, len(m.removedblocked_user))
-		for id := range m.removedblocked_user {
+	case useraccount.EdgeBlockedUsers:
+		ids := make([]ent.Value, 0, len(m.removedblocked_users))
+		for id := range m.removedblocked_users {
+			ids = append(ids, id)
+		}
+		return ids
+	case useraccount.EdgeThreads:
+		ids := make([]ent.Value, 0, len(m.removedthreads))
+		for id := range m.removedthreads {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2875,24 +4499,27 @@ func (m *UserAccountMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserAccountMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.clearedprofile {
 		edges = append(edges, useraccount.EdgeProfile)
 	}
 	if m.clearedfollowers {
 		edges = append(edges, useraccount.EdgeFollowers)
 	}
-	if m.clearedfollowing {
-		edges = append(edges, useraccount.EdgeFollowing)
+	if m.clearedfollowings {
+		edges = append(edges, useraccount.EdgeFollowings)
 	}
 	if m.clearedblocked_by {
 		edges = append(edges, useraccount.EdgeBlockedBy)
 	}
-	if m.clearedblocked_user {
-		edges = append(edges, useraccount.EdgeBlockedUser)
+	if m.clearedblocked_users {
+		edges = append(edges, useraccount.EdgeBlockedUsers)
 	}
-	if m.cleareduser_count_info {
-		edges = append(edges, useraccount.EdgeUserCountInfo)
+	if m.cleareduser_count {
+		edges = append(edges, useraccount.EdgeUserCount)
+	}
+	if m.clearedthreads {
+		edges = append(edges, useraccount.EdgeThreads)
 	}
 	return edges
 }
@@ -2905,14 +4532,16 @@ func (m *UserAccountMutation) EdgeCleared(name string) bool {
 		return m.clearedprofile
 	case useraccount.EdgeFollowers:
 		return m.clearedfollowers
-	case useraccount.EdgeFollowing:
-		return m.clearedfollowing
+	case useraccount.EdgeFollowings:
+		return m.clearedfollowings
 	case useraccount.EdgeBlockedBy:
 		return m.clearedblocked_by
-	case useraccount.EdgeBlockedUser:
-		return m.clearedblocked_user
-	case useraccount.EdgeUserCountInfo:
-		return m.cleareduser_count_info
+	case useraccount.EdgeBlockedUsers:
+		return m.clearedblocked_users
+	case useraccount.EdgeUserCount:
+		return m.cleareduser_count
+	case useraccount.EdgeThreads:
+		return m.clearedthreads
 	}
 	return false
 }
@@ -2924,8 +4553,8 @@ func (m *UserAccountMutation) ClearEdge(name string) error {
 	case useraccount.EdgeProfile:
 		m.ClearProfile()
 		return nil
-	case useraccount.EdgeUserCountInfo:
-		m.ClearUserCountInfo()
+	case useraccount.EdgeUserCount:
+		m.ClearUserCount()
 		return nil
 	}
 	return fmt.Errorf("unknown UserAccount unique edge %s", name)
@@ -2941,17 +4570,20 @@ func (m *UserAccountMutation) ResetEdge(name string) error {
 	case useraccount.EdgeFollowers:
 		m.ResetFollowers()
 		return nil
-	case useraccount.EdgeFollowing:
-		m.ResetFollowing()
+	case useraccount.EdgeFollowings:
+		m.ResetFollowings()
 		return nil
 	case useraccount.EdgeBlockedBy:
 		m.ResetBlockedBy()
 		return nil
-	case useraccount.EdgeBlockedUser:
-		m.ResetBlockedUser()
+	case useraccount.EdgeBlockedUsers:
+		m.ResetBlockedUsers()
 		return nil
-	case useraccount.EdgeUserCountInfo:
-		m.ResetUserCountInfo()
+	case useraccount.EdgeUserCount:
+		m.ResetUserCount()
+		return nil
+	case useraccount.EdgeThreads:
+		m.ResetThreads()
 		return nil
 	}
 	return fmt.Errorf("unknown UserAccount edge %s", name)
@@ -2968,8 +4600,7 @@ type UserCountMutation struct {
 	followings_count    *int
 	addfollowings_count *int
 	clearedFields       map[string]struct{}
-	user                map[int]struct{}
-	removeduser         map[int]struct{}
+	user                *int
 	cleareduser         bool
 	done                bool
 	oldValue            func(context.Context) (*UserCount, error)
@@ -3186,14 +4817,9 @@ func (m *UserCountMutation) ResetFollowingsCount() {
 	m.addfollowings_count = nil
 }
 
-// AddUserIDs adds the "user" edge to the UserAccount entity by ids.
-func (m *UserCountMutation) AddUserIDs(ids ...int) {
-	if m.user == nil {
-		m.user = make(map[int]struct{})
-	}
-	for i := range ids {
-		m.user[ids[i]] = struct{}{}
-	}
+// SetUserID sets the "user" edge to the UserAccount entity by id.
+func (m *UserCountMutation) SetUserID(id int) {
+	m.user = &id
 }
 
 // ClearUser clears the "user" edge to the UserAccount entity.
@@ -3206,29 +4832,20 @@ func (m *UserCountMutation) UserCleared() bool {
 	return m.cleareduser
 }
 
-// RemoveUserIDs removes the "user" edge to the UserAccount entity by IDs.
-func (m *UserCountMutation) RemoveUserIDs(ids ...int) {
-	if m.removeduser == nil {
-		m.removeduser = make(map[int]struct{})
-	}
-	for i := range ids {
-		delete(m.user, ids[i])
-		m.removeduser[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedUser returns the removed IDs of the "user" edge to the UserAccount entity.
-func (m *UserCountMutation) RemovedUserIDs() (ids []int) {
-	for id := range m.removeduser {
-		ids = append(ids, id)
+// UserID returns the "user" edge ID in the mutation.
+func (m *UserCountMutation) UserID() (id int, exists bool) {
+	if m.user != nil {
+		return *m.user, true
 	}
 	return
 }
 
 // UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
 func (m *UserCountMutation) UserIDs() (ids []int) {
-	for id := range m.user {
-		ids = append(ids, id)
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -3237,7 +4854,6 @@ func (m *UserCountMutation) UserIDs() (ids []int) {
 func (m *UserCountMutation) ResetUser() {
 	m.user = nil
 	m.cleareduser = false
-	m.removeduser = nil
 }
 
 // Where appends a list predicates to the UserCountMutation builder.
@@ -3429,11 +5045,9 @@ func (m *UserCountMutation) AddedEdges() []string {
 func (m *UserCountMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case usercount.EdgeUser:
-		ids := make([]ent.Value, 0, len(m.user))
-		for id := range m.user {
-			ids = append(ids, id)
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -3441,23 +5055,12 @@ func (m *UserCountMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserCountMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removeduser != nil {
-		edges = append(edges, usercount.EdgeUser)
-	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *UserCountMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case usercount.EdgeUser:
-		ids := make([]ent.Value, 0, len(m.removeduser))
-		for id := range m.removeduser {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
@@ -3484,6 +5087,9 @@ func (m *UserCountMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserCountMutation) ClearEdge(name string) error {
 	switch name {
+	case usercount.EdgeUser:
+		m.ClearUser()
+		return nil
 	}
 	return fmt.Errorf("unknown UserCount unique edge %s", name)
 }
@@ -3497,6 +5103,651 @@ func (m *UserCountMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown UserCount edge %s", name)
+}
+
+// UserFollowerRelationshipMutation represents an operation that mutates the UserFollowerRelationship nodes in the graph.
+type UserFollowerRelationshipMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	follower         *int
+	clearedfollower  bool
+	following        *int
+	clearedfollowing bool
+	done             bool
+	oldValue         func(context.Context) (*UserFollowerRelationship, error)
+	predicates       []predicate.UserFollowerRelationship
+}
+
+var _ ent.Mutation = (*UserFollowerRelationshipMutation)(nil)
+
+// userfollowerrelationshipOption allows management of the mutation configuration using functional options.
+type userfollowerrelationshipOption func(*UserFollowerRelationshipMutation)
+
+// newUserFollowerRelationshipMutation creates new mutation for the UserFollowerRelationship entity.
+func newUserFollowerRelationshipMutation(c config, op Op, opts ...userfollowerrelationshipOption) *UserFollowerRelationshipMutation {
+	m := &UserFollowerRelationshipMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUserFollowerRelationship,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserFollowerRelationshipID sets the ID field of the mutation.
+func withUserFollowerRelationshipID(id int) userfollowerrelationshipOption {
+	return func(m *UserFollowerRelationshipMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UserFollowerRelationship
+		)
+		m.oldValue = func(ctx context.Context) (*UserFollowerRelationship, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UserFollowerRelationship.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUserFollowerRelationship sets the old UserFollowerRelationship of the mutation.
+func withUserFollowerRelationship(node *UserFollowerRelationship) userfollowerrelationshipOption {
+	return func(m *UserFollowerRelationshipMutation) {
+		m.oldValue = func(context.Context) (*UserFollowerRelationship, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserFollowerRelationshipMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserFollowerRelationshipMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserFollowerRelationshipMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserFollowerRelationshipMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UserFollowerRelationship.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserFollowerRelationshipMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserFollowerRelationshipMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the UserFollowerRelationship entity.
+// If the UserFollowerRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFollowerRelationshipMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UserFollowerRelationshipMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *UserFollowerRelationshipMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *UserFollowerRelationshipMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the UserFollowerRelationship entity.
+// If the UserFollowerRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFollowerRelationshipMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *UserFollowerRelationshipMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *UserFollowerRelationshipMutation) SetUserID(i int) {
+	m.following = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *UserFollowerRelationshipMutation) UserID() (r int, exists bool) {
+	v := m.following
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the UserFollowerRelationship entity.
+// If the UserFollowerRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFollowerRelationshipMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ClearUserID clears the value of the "user_id" field.
+func (m *UserFollowerRelationshipMutation) ClearUserID() {
+	m.following = nil
+	m.clearedFields[userfollowerrelationship.FieldUserID] = struct{}{}
+}
+
+// UserIDCleared returns if the "user_id" field was cleared in this mutation.
+func (m *UserFollowerRelationshipMutation) UserIDCleared() bool {
+	_, ok := m.clearedFields[userfollowerrelationship.FieldUserID]
+	return ok
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *UserFollowerRelationshipMutation) ResetUserID() {
+	m.following = nil
+	delete(m.clearedFields, userfollowerrelationship.FieldUserID)
+}
+
+// SetFollowerID sets the "follower_id" field.
+func (m *UserFollowerRelationshipMutation) SetFollowerID(i int) {
+	m.follower = &i
+}
+
+// FollowerID returns the value of the "follower_id" field in the mutation.
+func (m *UserFollowerRelationshipMutation) FollowerID() (r int, exists bool) {
+	v := m.follower
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFollowerID returns the old "follower_id" field's value of the UserFollowerRelationship entity.
+// If the UserFollowerRelationship object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserFollowerRelationshipMutation) OldFollowerID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFollowerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFollowerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFollowerID: %w", err)
+	}
+	return oldValue.FollowerID, nil
+}
+
+// ClearFollowerID clears the value of the "follower_id" field.
+func (m *UserFollowerRelationshipMutation) ClearFollowerID() {
+	m.follower = nil
+	m.clearedFields[userfollowerrelationship.FieldFollowerID] = struct{}{}
+}
+
+// FollowerIDCleared returns if the "follower_id" field was cleared in this mutation.
+func (m *UserFollowerRelationshipMutation) FollowerIDCleared() bool {
+	_, ok := m.clearedFields[userfollowerrelationship.FieldFollowerID]
+	return ok
+}
+
+// ResetFollowerID resets all changes to the "follower_id" field.
+func (m *UserFollowerRelationshipMutation) ResetFollowerID() {
+	m.follower = nil
+	delete(m.clearedFields, userfollowerrelationship.FieldFollowerID)
+}
+
+// ClearFollower clears the "follower" edge to the UserAccount entity.
+func (m *UserFollowerRelationshipMutation) ClearFollower() {
+	m.clearedfollower = true
+	m.clearedFields[userfollowerrelationship.FieldFollowerID] = struct{}{}
+}
+
+// FollowerCleared reports if the "follower" edge to the UserAccount entity was cleared.
+func (m *UserFollowerRelationshipMutation) FollowerCleared() bool {
+	return m.FollowerIDCleared() || m.clearedfollower
+}
+
+// FollowerIDs returns the "follower" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FollowerID instead. It exists only for internal usage by the builders.
+func (m *UserFollowerRelationshipMutation) FollowerIDs() (ids []int) {
+	if id := m.follower; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFollower resets all changes to the "follower" edge.
+func (m *UserFollowerRelationshipMutation) ResetFollower() {
+	m.follower = nil
+	m.clearedfollower = false
+}
+
+// SetFollowingID sets the "following" edge to the UserAccount entity by id.
+func (m *UserFollowerRelationshipMutation) SetFollowingID(id int) {
+	m.following = &id
+}
+
+// ClearFollowing clears the "following" edge to the UserAccount entity.
+func (m *UserFollowerRelationshipMutation) ClearFollowing() {
+	m.clearedfollowing = true
+	m.clearedFields[userfollowerrelationship.FieldUserID] = struct{}{}
+}
+
+// FollowingCleared reports if the "following" edge to the UserAccount entity was cleared.
+func (m *UserFollowerRelationshipMutation) FollowingCleared() bool {
+	return m.UserIDCleared() || m.clearedfollowing
+}
+
+// FollowingID returns the "following" edge ID in the mutation.
+func (m *UserFollowerRelationshipMutation) FollowingID() (id int, exists bool) {
+	if m.following != nil {
+		return *m.following, true
+	}
+	return
+}
+
+// FollowingIDs returns the "following" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FollowingID instead. It exists only for internal usage by the builders.
+func (m *UserFollowerRelationshipMutation) FollowingIDs() (ids []int) {
+	if id := m.following; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFollowing resets all changes to the "following" edge.
+func (m *UserFollowerRelationshipMutation) ResetFollowing() {
+	m.following = nil
+	m.clearedfollowing = false
+}
+
+// Where appends a list predicates to the UserFollowerRelationshipMutation builder.
+func (m *UserFollowerRelationshipMutation) Where(ps ...predicate.UserFollowerRelationship) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserFollowerRelationshipMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserFollowerRelationshipMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserFollowerRelationship, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserFollowerRelationshipMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserFollowerRelationshipMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UserFollowerRelationship).
+func (m *UserFollowerRelationshipMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserFollowerRelationshipMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, userfollowerrelationship.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, userfollowerrelationship.FieldUpdatedAt)
+	}
+	if m.following != nil {
+		fields = append(fields, userfollowerrelationship.FieldUserID)
+	}
+	if m.follower != nil {
+		fields = append(fields, userfollowerrelationship.FieldFollowerID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserFollowerRelationshipMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case userfollowerrelationship.FieldCreatedAt:
+		return m.CreatedAt()
+	case userfollowerrelationship.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case userfollowerrelationship.FieldUserID:
+		return m.UserID()
+	case userfollowerrelationship.FieldFollowerID:
+		return m.FollowerID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserFollowerRelationshipMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case userfollowerrelationship.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case userfollowerrelationship.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case userfollowerrelationship.FieldUserID:
+		return m.OldUserID(ctx)
+	case userfollowerrelationship.FieldFollowerID:
+		return m.OldFollowerID(ctx)
+	}
+	return nil, fmt.Errorf("unknown UserFollowerRelationship field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserFollowerRelationshipMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case userfollowerrelationship.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case userfollowerrelationship.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case userfollowerrelationship.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case userfollowerrelationship.FieldFollowerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFollowerID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserFollowerRelationship field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserFollowerRelationshipMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserFollowerRelationshipMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserFollowerRelationshipMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown UserFollowerRelationship numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserFollowerRelationshipMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(userfollowerrelationship.FieldUserID) {
+		fields = append(fields, userfollowerrelationship.FieldUserID)
+	}
+	if m.FieldCleared(userfollowerrelationship.FieldFollowerID) {
+		fields = append(fields, userfollowerrelationship.FieldFollowerID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserFollowerRelationshipMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserFollowerRelationshipMutation) ClearField(name string) error {
+	switch name {
+	case userfollowerrelationship.FieldUserID:
+		m.ClearUserID()
+		return nil
+	case userfollowerrelationship.FieldFollowerID:
+		m.ClearFollowerID()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFollowerRelationship nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserFollowerRelationshipMutation) ResetField(name string) error {
+	switch name {
+	case userfollowerrelationship.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case userfollowerrelationship.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case userfollowerrelationship.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case userfollowerrelationship.FieldFollowerID:
+		m.ResetFollowerID()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFollowerRelationship field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserFollowerRelationshipMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.follower != nil {
+		edges = append(edges, userfollowerrelationship.EdgeFollower)
+	}
+	if m.following != nil {
+		edges = append(edges, userfollowerrelationship.EdgeFollowing)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserFollowerRelationshipMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case userfollowerrelationship.EdgeFollower:
+		if id := m.follower; id != nil {
+			return []ent.Value{*id}
+		}
+	case userfollowerrelationship.EdgeFollowing:
+		if id := m.following; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserFollowerRelationshipMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserFollowerRelationshipMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserFollowerRelationshipMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedfollower {
+		edges = append(edges, userfollowerrelationship.EdgeFollower)
+	}
+	if m.clearedfollowing {
+		edges = append(edges, userfollowerrelationship.EdgeFollowing)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserFollowerRelationshipMutation) EdgeCleared(name string) bool {
+	switch name {
+	case userfollowerrelationship.EdgeFollower:
+		return m.clearedfollower
+	case userfollowerrelationship.EdgeFollowing:
+		return m.clearedfollowing
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserFollowerRelationshipMutation) ClearEdge(name string) error {
+	switch name {
+	case userfollowerrelationship.EdgeFollower:
+		m.ClearFollower()
+		return nil
+	case userfollowerrelationship.EdgeFollowing:
+		m.ClearFollowing()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFollowerRelationship unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserFollowerRelationshipMutation) ResetEdge(name string) error {
+	switch name {
+	case userfollowerrelationship.EdgeFollower:
+		m.ResetFollower()
+		return nil
+	case userfollowerrelationship.EdgeFollowing:
+		m.ResetFollowing()
+		return nil
+	}
+	return fmt.Errorf("unknown UserFollowerRelationship edge %s", name)
 }
 
 // UserProfileMutation represents an operation that mutates the UserProfile nodes in the graph.
@@ -3689,6 +5940,104 @@ func (m *UserProfileMutation) ResetBio() {
 	m.bio = nil
 }
 
+// SetProfilePictureID sets the "profile_picture_id" field.
+func (m *UserProfileMutation) SetProfilePictureID(i int) {
+	m.profile_picture = &i
+}
+
+// ProfilePictureID returns the value of the "profile_picture_id" field in the mutation.
+func (m *UserProfileMutation) ProfilePictureID() (r int, exists bool) {
+	v := m.profile_picture
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfilePictureID returns the old "profile_picture_id" field's value of the UserProfile entity.
+// If the UserProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserProfileMutation) OldProfilePictureID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfilePictureID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfilePictureID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfilePictureID: %w", err)
+	}
+	return oldValue.ProfilePictureID, nil
+}
+
+// ClearProfilePictureID clears the value of the "profile_picture_id" field.
+func (m *UserProfileMutation) ClearProfilePictureID() {
+	m.profile_picture = nil
+	m.clearedFields[userprofile.FieldProfilePictureID] = struct{}{}
+}
+
+// ProfilePictureIDCleared returns if the "profile_picture_id" field was cleared in this mutation.
+func (m *UserProfileMutation) ProfilePictureIDCleared() bool {
+	_, ok := m.clearedFields[userprofile.FieldProfilePictureID]
+	return ok
+}
+
+// ResetProfilePictureID resets all changes to the "profile_picture_id" field.
+func (m *UserProfileMutation) ResetProfilePictureID() {
+	m.profile_picture = nil
+	delete(m.clearedFields, userprofile.FieldProfilePictureID)
+}
+
+// SetBannerID sets the "banner_id" field.
+func (m *UserProfileMutation) SetBannerID(i int) {
+	m.banner = &i
+}
+
+// BannerID returns the value of the "banner_id" field in the mutation.
+func (m *UserProfileMutation) BannerID() (r int, exists bool) {
+	v := m.banner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBannerID returns the old "banner_id" field's value of the UserProfile entity.
+// If the UserProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserProfileMutation) OldBannerID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBannerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBannerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBannerID: %w", err)
+	}
+	return oldValue.BannerID, nil
+}
+
+// ClearBannerID clears the value of the "banner_id" field.
+func (m *UserProfileMutation) ClearBannerID() {
+	m.banner = nil
+	m.clearedFields[userprofile.FieldBannerID] = struct{}{}
+}
+
+// BannerIDCleared returns if the "banner_id" field was cleared in this mutation.
+func (m *UserProfileMutation) BannerIDCleared() bool {
+	_, ok := m.clearedFields[userprofile.FieldBannerID]
+	return ok
+}
+
+// ResetBannerID resets all changes to the "banner_id" field.
+func (m *UserProfileMutation) ResetBannerID() {
+	m.banner = nil
+	delete(m.clearedFields, userprofile.FieldBannerID)
+}
+
 // SetAccountID sets the "account" edge to the UserAccount entity by id.
 func (m *UserProfileMutation) SetAccountID(id int) {
 	m.account = &id
@@ -3728,27 +6077,15 @@ func (m *UserProfileMutation) ResetAccount() {
 	m.clearedaccount = false
 }
 
-// SetProfilePictureID sets the "profile_picture" edge to the Media entity by id.
-func (m *UserProfileMutation) SetProfilePictureID(id int) {
-	m.profile_picture = &id
-}
-
 // ClearProfilePicture clears the "profile_picture" edge to the Media entity.
 func (m *UserProfileMutation) ClearProfilePicture() {
 	m.clearedprofile_picture = true
+	m.clearedFields[userprofile.FieldProfilePictureID] = struct{}{}
 }
 
 // ProfilePictureCleared reports if the "profile_picture" edge to the Media entity was cleared.
 func (m *UserProfileMutation) ProfilePictureCleared() bool {
-	return m.clearedprofile_picture
-}
-
-// ProfilePictureID returns the "profile_picture" edge ID in the mutation.
-func (m *UserProfileMutation) ProfilePictureID() (id int, exists bool) {
-	if m.profile_picture != nil {
-		return *m.profile_picture, true
-	}
-	return
+	return m.ProfilePictureIDCleared() || m.clearedprofile_picture
 }
 
 // ProfilePictureIDs returns the "profile_picture" edge IDs in the mutation.
@@ -3767,27 +6104,15 @@ func (m *UserProfileMutation) ResetProfilePicture() {
 	m.clearedprofile_picture = false
 }
 
-// SetBannerID sets the "banner" edge to the Media entity by id.
-func (m *UserProfileMutation) SetBannerID(id int) {
-	m.banner = &id
-}
-
 // ClearBanner clears the "banner" edge to the Media entity.
 func (m *UserProfileMutation) ClearBanner() {
 	m.clearedbanner = true
+	m.clearedFields[userprofile.FieldBannerID] = struct{}{}
 }
 
 // BannerCleared reports if the "banner" edge to the Media entity was cleared.
 func (m *UserProfileMutation) BannerCleared() bool {
-	return m.clearedbanner
-}
-
-// BannerID returns the "banner" edge ID in the mutation.
-func (m *UserProfileMutation) BannerID() (id int, exists bool) {
-	if m.banner != nil {
-		return *m.banner, true
-	}
-	return
+	return m.BannerIDCleared() || m.clearedbanner
 }
 
 // BannerIDs returns the "banner" edge IDs in the mutation.
@@ -3840,12 +6165,18 @@ func (m *UserProfileMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserProfileMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 4)
 	if m.display_name != nil {
 		fields = append(fields, userprofile.FieldDisplayName)
 	}
 	if m.bio != nil {
 		fields = append(fields, userprofile.FieldBio)
+	}
+	if m.profile_picture != nil {
+		fields = append(fields, userprofile.FieldProfilePictureID)
+	}
+	if m.banner != nil {
+		fields = append(fields, userprofile.FieldBannerID)
 	}
 	return fields
 }
@@ -3859,6 +6190,10 @@ func (m *UserProfileMutation) Field(name string) (ent.Value, bool) {
 		return m.DisplayName()
 	case userprofile.FieldBio:
 		return m.Bio()
+	case userprofile.FieldProfilePictureID:
+		return m.ProfilePictureID()
+	case userprofile.FieldBannerID:
+		return m.BannerID()
 	}
 	return nil, false
 }
@@ -3872,6 +6207,10 @@ func (m *UserProfileMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldDisplayName(ctx)
 	case userprofile.FieldBio:
 		return m.OldBio(ctx)
+	case userprofile.FieldProfilePictureID:
+		return m.OldProfilePictureID(ctx)
+	case userprofile.FieldBannerID:
+		return m.OldBannerID(ctx)
 	}
 	return nil, fmt.Errorf("unknown UserProfile field %s", name)
 }
@@ -3895,6 +6234,20 @@ func (m *UserProfileMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetBio(v)
 		return nil
+	case userprofile.FieldProfilePictureID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfilePictureID(v)
+		return nil
+	case userprofile.FieldBannerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBannerID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown UserProfile field %s", name)
 }
@@ -3902,13 +6255,16 @@ func (m *UserProfileMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserProfileMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserProfileMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
 	return nil, false
 }
 
@@ -3924,7 +6280,14 @@ func (m *UserProfileMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserProfileMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(userprofile.FieldProfilePictureID) {
+		fields = append(fields, userprofile.FieldProfilePictureID)
+	}
+	if m.FieldCleared(userprofile.FieldBannerID) {
+		fields = append(fields, userprofile.FieldBannerID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3937,6 +6300,14 @@ func (m *UserProfileMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserProfileMutation) ClearField(name string) error {
+	switch name {
+	case userprofile.FieldProfilePictureID:
+		m.ClearProfilePictureID()
+		return nil
+	case userprofile.FieldBannerID:
+		m.ClearBannerID()
+		return nil
+	}
 	return fmt.Errorf("unknown UserProfile nullable field %s", name)
 }
 
@@ -3949,6 +6320,12 @@ func (m *UserProfileMutation) ResetField(name string) error {
 		return nil
 	case userprofile.FieldBio:
 		m.ResetBio()
+		return nil
+	case userprofile.FieldProfilePictureID:
+		m.ResetProfilePictureID()
+		return nil
+	case userprofile.FieldBannerID:
+		m.ResetBannerID()
 		return nil
 	}
 	return fmt.Errorf("unknown UserProfile field %s", name)

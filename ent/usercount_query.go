@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -24,6 +23,7 @@ type UserCountQuery struct {
 	inters     []Interceptor
 	predicates []predicate.UserCount
 	withUser   *UserAccountQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -74,7 +74,7 @@ func (ucq *UserCountQuery) QueryUser() *UserAccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(usercount.Table, usercount.FieldID, selector),
 			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, usercount.UserTable, usercount.UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, usercount.UserTable, usercount.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(ucq.driver.Dialect(), step)
 		return fromU, nil
@@ -369,11 +369,18 @@ func (ucq *UserCountQuery) prepareQuery(ctx context.Context) error {
 func (ucq *UserCountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*UserCount, error) {
 	var (
 		nodes       = []*UserCount{}
+		withFKs     = ucq.withFKs
 		_spec       = ucq.querySpec()
 		loadedTypes = [1]bool{
 			ucq.withUser != nil,
 		}
 	)
+	if ucq.withUser != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, usercount.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*UserCount).scanValues(nil, columns)
 	}
@@ -393,9 +400,8 @@ func (ucq *UserCountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*U
 		return nodes, nil
 	}
 	if query := ucq.withUser; query != nil {
-		if err := ucq.loadUser(ctx, query, nodes,
-			func(n *UserCount) { n.Edges.User = []*UserAccount{} },
-			func(n *UserCount, e *UserAccount) { n.Edges.User = append(n.Edges.User, e) }); err != nil {
+		if err := ucq.loadUser(ctx, query, nodes, nil,
+			func(n *UserCount, e *UserAccount) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -403,33 +409,34 @@ func (ucq *UserCountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*U
 }
 
 func (ucq *UserCountQuery) loadUser(ctx context.Context, query *UserAccountQuery, nodes []*UserCount, init func(*UserCount), assign func(*UserCount, *UserAccount)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*UserCount)
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*UserCount)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		if nodes[i].user_account_user_count == nil {
+			continue
 		}
+		fk := *nodes[i].user_account_user_count
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.withFKs = true
-	query.Where(predicate.UserAccount(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(usercount.UserColumn), fks...))
-	}))
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(useraccount.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_account_user_count_info
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_account_user_count_info" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_account_user_count_info" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_account_user_count" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

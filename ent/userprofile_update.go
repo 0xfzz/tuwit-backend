@@ -41,6 +41,46 @@ func (upu *UserProfileUpdate) SetBio(s string) *UserProfileUpdate {
 	return upu
 }
 
+// SetProfilePictureID sets the "profile_picture_id" field.
+func (upu *UserProfileUpdate) SetProfilePictureID(i int) *UserProfileUpdate {
+	upu.mutation.SetProfilePictureID(i)
+	return upu
+}
+
+// SetNillableProfilePictureID sets the "profile_picture_id" field if the given value is not nil.
+func (upu *UserProfileUpdate) SetNillableProfilePictureID(i *int) *UserProfileUpdate {
+	if i != nil {
+		upu.SetProfilePictureID(*i)
+	}
+	return upu
+}
+
+// ClearProfilePictureID clears the value of the "profile_picture_id" field.
+func (upu *UserProfileUpdate) ClearProfilePictureID() *UserProfileUpdate {
+	upu.mutation.ClearProfilePictureID()
+	return upu
+}
+
+// SetBannerID sets the "banner_id" field.
+func (upu *UserProfileUpdate) SetBannerID(i int) *UserProfileUpdate {
+	upu.mutation.SetBannerID(i)
+	return upu
+}
+
+// SetNillableBannerID sets the "banner_id" field if the given value is not nil.
+func (upu *UserProfileUpdate) SetNillableBannerID(i *int) *UserProfileUpdate {
+	if i != nil {
+		upu.SetBannerID(*i)
+	}
+	return upu
+}
+
+// ClearBannerID clears the value of the "banner_id" field.
+func (upu *UserProfileUpdate) ClearBannerID() *UserProfileUpdate {
+	upu.mutation.ClearBannerID()
+	return upu
+}
+
 // SetAccountID sets the "account" edge to the UserAccount entity by ID.
 func (upu *UserProfileUpdate) SetAccountID(id int) *UserProfileUpdate {
 	upu.mutation.SetAccountID(id)
@@ -52,37 +92,9 @@ func (upu *UserProfileUpdate) SetAccount(u *UserAccount) *UserProfileUpdate {
 	return upu.SetAccountID(u.ID)
 }
 
-// SetProfilePictureID sets the "profile_picture" edge to the Media entity by ID.
-func (upu *UserProfileUpdate) SetProfilePictureID(id int) *UserProfileUpdate {
-	upu.mutation.SetProfilePictureID(id)
-	return upu
-}
-
-// SetNillableProfilePictureID sets the "profile_picture" edge to the Media entity by ID if the given value is not nil.
-func (upu *UserProfileUpdate) SetNillableProfilePictureID(id *int) *UserProfileUpdate {
-	if id != nil {
-		upu = upu.SetProfilePictureID(*id)
-	}
-	return upu
-}
-
 // SetProfilePicture sets the "profile_picture" edge to the Media entity.
 func (upu *UserProfileUpdate) SetProfilePicture(m *Media) *UserProfileUpdate {
 	return upu.SetProfilePictureID(m.ID)
-}
-
-// SetBannerID sets the "banner" edge to the Media entity by ID.
-func (upu *UserProfileUpdate) SetBannerID(id int) *UserProfileUpdate {
-	upu.mutation.SetBannerID(id)
-	return upu
-}
-
-// SetNillableBannerID sets the "banner" edge to the Media entity by ID if the given value is not nil.
-func (upu *UserProfileUpdate) SetNillableBannerID(id *int) *UserProfileUpdate {
-	if id != nil {
-		upu = upu.SetBannerID(*id)
-	}
-	return upu
 }
 
 // SetBanner sets the "banner" edge to the Media entity.
@@ -285,6 +297,46 @@ func (upuo *UserProfileUpdateOne) SetBio(s string) *UserProfileUpdateOne {
 	return upuo
 }
 
+// SetProfilePictureID sets the "profile_picture_id" field.
+func (upuo *UserProfileUpdateOne) SetProfilePictureID(i int) *UserProfileUpdateOne {
+	upuo.mutation.SetProfilePictureID(i)
+	return upuo
+}
+
+// SetNillableProfilePictureID sets the "profile_picture_id" field if the given value is not nil.
+func (upuo *UserProfileUpdateOne) SetNillableProfilePictureID(i *int) *UserProfileUpdateOne {
+	if i != nil {
+		upuo.SetProfilePictureID(*i)
+	}
+	return upuo
+}
+
+// ClearProfilePictureID clears the value of the "profile_picture_id" field.
+func (upuo *UserProfileUpdateOne) ClearProfilePictureID() *UserProfileUpdateOne {
+	upuo.mutation.ClearProfilePictureID()
+	return upuo
+}
+
+// SetBannerID sets the "banner_id" field.
+func (upuo *UserProfileUpdateOne) SetBannerID(i int) *UserProfileUpdateOne {
+	upuo.mutation.SetBannerID(i)
+	return upuo
+}
+
+// SetNillableBannerID sets the "banner_id" field if the given value is not nil.
+func (upuo *UserProfileUpdateOne) SetNillableBannerID(i *int) *UserProfileUpdateOne {
+	if i != nil {
+		upuo.SetBannerID(*i)
+	}
+	return upuo
+}
+
+// ClearBannerID clears the value of the "banner_id" field.
+func (upuo *UserProfileUpdateOne) ClearBannerID() *UserProfileUpdateOne {
+	upuo.mutation.ClearBannerID()
+	return upuo
+}
+
 // SetAccountID sets the "account" edge to the UserAccount entity by ID.
 func (upuo *UserProfileUpdateOne) SetAccountID(id int) *UserProfileUpdateOne {
 	upuo.mutation.SetAccountID(id)
@@ -296,37 +348,9 @@ func (upuo *UserProfileUpdateOne) SetAccount(u *UserAccount) *UserProfileUpdateO
 	return upuo.SetAccountID(u.ID)
 }
 
-// SetProfilePictureID sets the "profile_picture" edge to the Media entity by ID.
-func (upuo *UserProfileUpdateOne) SetProfilePictureID(id int) *UserProfileUpdateOne {
-	upuo.mutation.SetProfilePictureID(id)
-	return upuo
-}
-
-// SetNillableProfilePictureID sets the "profile_picture" edge to the Media entity by ID if the given value is not nil.
-func (upuo *UserProfileUpdateOne) SetNillableProfilePictureID(id *int) *UserProfileUpdateOne {
-	if id != nil {
-		upuo = upuo.SetProfilePictureID(*id)
-	}
-	return upuo
-}
-
 // SetProfilePicture sets the "profile_picture" edge to the Media entity.
 func (upuo *UserProfileUpdateOne) SetProfilePicture(m *Media) *UserProfileUpdateOne {
 	return upuo.SetProfilePictureID(m.ID)
-}
-
-// SetBannerID sets the "banner" edge to the Media entity by ID.
-func (upuo *UserProfileUpdateOne) SetBannerID(id int) *UserProfileUpdateOne {
-	upuo.mutation.SetBannerID(id)
-	return upuo
-}
-
-// SetNillableBannerID sets the "banner" edge to the Media entity by ID if the given value is not nil.
-func (upuo *UserProfileUpdateOne) SetNillableBannerID(id *int) *UserProfileUpdateOne {
-	if id != nil {
-		upuo = upuo.SetBannerID(*id)
-	}
-	return upuo
 }
 
 // SetBanner sets the "banner" edge to the Media entity.

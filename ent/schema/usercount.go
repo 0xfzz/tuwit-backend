@@ -30,6 +30,6 @@ func (UserCount) Fields() []ent.Field {
 // Edges of the UserCount.
 func (UserCount) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("user", UserAccount.Type).Ref("user_count_info").Required(),
+		edge.From("user", UserAccount.Type).Ref("user_count").Unique().Required(),
 	}
 }

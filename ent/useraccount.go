@@ -32,9 +32,8 @@ type UserAccount struct {
 	IsEmailVerified bool `json:"is_email_verified,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserAccountQuery when eager-loading is set.
-	Edges                        UserAccountEdges `json:"edges"`
-	user_account_user_count_info *int
-	selectValues                 sql.SelectValues
+	Edges        UserAccountEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // UserAccountEdges holds the relations/edges for other nodes in the graph.
@@ -42,18 +41,20 @@ type UserAccountEdges struct {
 	// Profile holds the value of the profile edge.
 	Profile *UserProfile `json:"profile,omitempty"`
 	// Followers holds the value of the followers edge.
-	Followers []*UserAccount `json:"followers,omitempty"`
-	// Following holds the value of the following edge.
-	Following []*UserAccount `json:"following,omitempty"`
+	Followers []*UserFollowerRelationship `json:"followers,omitempty"`
+	// Followings holds the value of the followings edge.
+	Followings []*UserFollowerRelationship `json:"followings,omitempty"`
 	// BlockedBy holds the value of the blocked_by edge.
-	BlockedBy []*UserAccount `json:"blocked_by,omitempty"`
-	// BlockedUser holds the value of the blocked_user edge.
-	BlockedUser []*UserAccount `json:"blocked_user,omitempty"`
-	// UserCountInfo holds the value of the user_count_info edge.
-	UserCountInfo *UserCount `json:"user_count_info,omitempty"`
+	BlockedBy []*BlockedUsersRelationship `json:"blocked_by,omitempty"`
+	// BlockedUsers holds the value of the blocked_users edge.
+	BlockedUsers []*BlockedUsersRelationship `json:"blocked_users,omitempty"`
+	// UserCount holds the value of the user_count edge.
+	UserCount *UserCount `json:"user_count,omitempty"`
+	// Threads holds the value of the threads edge.
+	Threads []*Thread `json:"threads,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // ProfileOrErr returns the Profile value or an error if the edge
@@ -71,51 +72,60 @@ func (e UserAccountEdges) ProfileOrErr() (*UserProfile, error) {
 
 // FollowersOrErr returns the Followers value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserAccountEdges) FollowersOrErr() ([]*UserAccount, error) {
+func (e UserAccountEdges) FollowersOrErr() ([]*UserFollowerRelationship, error) {
 	if e.loadedTypes[1] {
 		return e.Followers, nil
 	}
 	return nil, &NotLoadedError{edge: "followers"}
 }
 
-// FollowingOrErr returns the Following value or an error if the edge
+// FollowingsOrErr returns the Followings value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserAccountEdges) FollowingOrErr() ([]*UserAccount, error) {
+func (e UserAccountEdges) FollowingsOrErr() ([]*UserFollowerRelationship, error) {
 	if e.loadedTypes[2] {
-		return e.Following, nil
+		return e.Followings, nil
 	}
-	return nil, &NotLoadedError{edge: "following"}
+	return nil, &NotLoadedError{edge: "followings"}
 }
 
 // BlockedByOrErr returns the BlockedBy value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserAccountEdges) BlockedByOrErr() ([]*UserAccount, error) {
+func (e UserAccountEdges) BlockedByOrErr() ([]*BlockedUsersRelationship, error) {
 	if e.loadedTypes[3] {
 		return e.BlockedBy, nil
 	}
 	return nil, &NotLoadedError{edge: "blocked_by"}
 }
 
-// BlockedUserOrErr returns the BlockedUser value or an error if the edge
+// BlockedUsersOrErr returns the BlockedUsers value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserAccountEdges) BlockedUserOrErr() ([]*UserAccount, error) {
+func (e UserAccountEdges) BlockedUsersOrErr() ([]*BlockedUsersRelationship, error) {
 	if e.loadedTypes[4] {
-		return e.BlockedUser, nil
+		return e.BlockedUsers, nil
 	}
-	return nil, &NotLoadedError{edge: "blocked_user"}
+	return nil, &NotLoadedError{edge: "blocked_users"}
 }
 
-// UserCountInfoOrErr returns the UserCountInfo value or an error if the edge
+// UserCountOrErr returns the UserCount value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e UserAccountEdges) UserCountInfoOrErr() (*UserCount, error) {
+func (e UserAccountEdges) UserCountOrErr() (*UserCount, error) {
 	if e.loadedTypes[5] {
-		if e.UserCountInfo == nil {
+		if e.UserCount == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: usercount.Label}
 		}
-		return e.UserCountInfo, nil
+		return e.UserCount, nil
 	}
-	return nil, &NotLoadedError{edge: "user_count_info"}
+	return nil, &NotLoadedError{edge: "user_count"}
+}
+
+// ThreadsOrErr returns the Threads value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) ThreadsOrErr() ([]*Thread, error) {
+	if e.loadedTypes[6] {
+		return e.Threads, nil
+	}
+	return nil, &NotLoadedError{edge: "threads"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -129,8 +139,6 @@ func (*UserAccount) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case useraccount.FieldEmail, useraccount.FieldUsername, useraccount.FieldPassword:
 			values[i] = new(sql.NullString)
-		case useraccount.ForeignKeys[0]: // user_account_user_count_info
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -188,13 +196,6 @@ func (ua *UserAccount) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				ua.IsEmailVerified = value.Bool
 			}
-		case useraccount.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_account_user_count_info", value)
-			} else if value.Valid {
-				ua.user_account_user_count_info = new(int)
-				*ua.user_account_user_count_info = int(value.Int64)
-			}
 		default:
 			ua.selectValues.Set(columns[i], values[i])
 		}
@@ -214,28 +215,33 @@ func (ua *UserAccount) QueryProfile() *UserProfileQuery {
 }
 
 // QueryFollowers queries the "followers" edge of the UserAccount entity.
-func (ua *UserAccount) QueryFollowers() *UserAccountQuery {
+func (ua *UserAccount) QueryFollowers() *UserFollowerRelationshipQuery {
 	return NewUserAccountClient(ua.config).QueryFollowers(ua)
 }
 
-// QueryFollowing queries the "following" edge of the UserAccount entity.
-func (ua *UserAccount) QueryFollowing() *UserAccountQuery {
-	return NewUserAccountClient(ua.config).QueryFollowing(ua)
+// QueryFollowings queries the "followings" edge of the UserAccount entity.
+func (ua *UserAccount) QueryFollowings() *UserFollowerRelationshipQuery {
+	return NewUserAccountClient(ua.config).QueryFollowings(ua)
 }
 
 // QueryBlockedBy queries the "blocked_by" edge of the UserAccount entity.
-func (ua *UserAccount) QueryBlockedBy() *UserAccountQuery {
+func (ua *UserAccount) QueryBlockedBy() *BlockedUsersRelationshipQuery {
 	return NewUserAccountClient(ua.config).QueryBlockedBy(ua)
 }
 
-// QueryBlockedUser queries the "blocked_user" edge of the UserAccount entity.
-func (ua *UserAccount) QueryBlockedUser() *UserAccountQuery {
-	return NewUserAccountClient(ua.config).QueryBlockedUser(ua)
+// QueryBlockedUsers queries the "blocked_users" edge of the UserAccount entity.
+func (ua *UserAccount) QueryBlockedUsers() *BlockedUsersRelationshipQuery {
+	return NewUserAccountClient(ua.config).QueryBlockedUsers(ua)
 }
 
-// QueryUserCountInfo queries the "user_count_info" edge of the UserAccount entity.
-func (ua *UserAccount) QueryUserCountInfo() *UserCountQuery {
-	return NewUserAccountClient(ua.config).QueryUserCountInfo(ua)
+// QueryUserCount queries the "user_count" edge of the UserAccount entity.
+func (ua *UserAccount) QueryUserCount() *UserCountQuery {
+	return NewUserAccountClient(ua.config).QueryUserCount(ua)
+}
+
+// QueryThreads queries the "threads" edge of the UserAccount entity.
+func (ua *UserAccount) QueryThreads() *ThreadQuery {
+	return NewUserAccountClient(ua.config).QueryThreads(ua)
 }
 
 // Update returns a builder for updating this UserAccount.
