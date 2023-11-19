@@ -125,7 +125,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "username", Type: field.TypeString, Unique: true},
-		{Name: "password", Type: field.TypeString},
+		{Name: "password", Type: field.TypeBytes},
 		{Name: "is_verified", Type: field.TypeBool, Default: false},
 		{Name: "is_private", Type: field.TypeBool, Default: false},
 		{Name: "is_email_verified", Type: field.TypeBool, Default: false},
@@ -189,7 +189,7 @@ var (
 	UserProfileColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "display_name", Type: field.TypeString},
-		{Name: "bio", Type: field.TypeString},
+		{Name: "bio", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "user_account_profile", Type: field.TypeInt, Unique: true},
 		{Name: "profile_picture_id", Type: field.TypeInt, Nullable: true},
 		{Name: "banner_id", Type: field.TypeInt, Nullable: true},

@@ -1,31 +1,35 @@
-package lib
+package config
 
 import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
-type DBConfig struct {
+type dbconfig struct {
 	Name     string
 	Username string
 	Host     string
 	Password string
 	Port     int
 }
-type APPConfig struct {
+type appconfig struct {
 	Port int
+	Url  string
 }
-type JWTConfig struct {
+type jwtconifg struct {
 	Secret string
 }
 type Config struct {
-	DB  DBConfig
-	APP APPConfig
-	JWT JWTConfig
+	DB  dbconfig
+	APP appconfig
+	JWT jwtconifg
 }
 
-func NewConfig() Config {
+func Get() Config {
+	_ = godotenv.Load("../.env")
 	dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
 		panic(fmt.Sprintf("Error while converting database port : %s", err))
@@ -37,27 +41,19 @@ func NewConfig() Config {
 	}
 
 	return Config{
-		DB: DBConfig{
+		DB: dbconfig{
 			Name:     os.Getenv("DB_NAME"),
 			Username: os.Getenv("DB_USERNAME"),
 			Host:     os.Getenv("DB_HOST"),
 			Password: os.Getenv("DB_PASSWORD"),
 			Port:     dbPort,
 		},
-		APP: APPConfig{
+		APP: appconfig{
 			Port: appPort,
+			Url:  os.Getenv("APP_URL"),
 		},
-		JWT: JWTConfig{
+		JWT: jwtconifg{
 			Secret: os.Getenv("JWT_SECRET"),
 		},
 	}
 }
-
-// DB_NAME=
-// DB_USERNAME=
-// DB_HOST=
-// DB_PASSWORD=
-// DB_PORT=
-
-// APP_PORT=
-// JWT_SECRET=

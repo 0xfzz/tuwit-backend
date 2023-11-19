@@ -3458,7 +3458,7 @@ type UserAccountMutation struct {
 	id                   *int
 	email                *string
 	username             *string
-	password             *string
+	password             *[]byte
 	is_verified          *bool
 	is_private           *bool
 	is_email_verified    *bool
@@ -3658,12 +3658,12 @@ func (m *UserAccountMutation) ResetUsername() {
 }
 
 // SetPassword sets the "password" field.
-func (m *UserAccountMutation) SetPassword(s string) {
-	m.password = &s
+func (m *UserAccountMutation) SetPassword(b []byte) {
+	m.password = &b
 }
 
 // Password returns the value of the "password" field in the mutation.
-func (m *UserAccountMutation) Password() (r string, exists bool) {
+func (m *UserAccountMutation) Password() (r []byte, exists bool) {
 	v := m.password
 	if v == nil {
 		return
@@ -3674,7 +3674,7 @@ func (m *UserAccountMutation) Password() (r string, exists bool) {
 // OldPassword returns the old "password" field's value of the UserAccount entity.
 // If the UserAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserAccountMutation) OldPassword(ctx context.Context) (v string, err error) {
+func (m *UserAccountMutation) OldPassword(ctx context.Context) (v []byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPassword is only allowed on UpdateOne operations")
 	}
@@ -4267,7 +4267,7 @@ func (m *UserAccountMutation) SetField(name string, value ent.Value) error {
 		m.SetUsername(v)
 		return nil
 	case useraccount.FieldPassword:
-		v, ok := value.(string)
+		v, ok := value.([]byte)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -5935,9 +5935,22 @@ func (m *UserProfileMutation) OldBio(ctx context.Context) (v string, err error) 
 	return oldValue.Bio, nil
 }
 
+// ClearBio clears the value of the "bio" field.
+func (m *UserProfileMutation) ClearBio() {
+	m.bio = nil
+	m.clearedFields[userprofile.FieldBio] = struct{}{}
+}
+
+// BioCleared returns if the "bio" field was cleared in this mutation.
+func (m *UserProfileMutation) BioCleared() bool {
+	_, ok := m.clearedFields[userprofile.FieldBio]
+	return ok
+}
+
 // ResetBio resets all changes to the "bio" field.
 func (m *UserProfileMutation) ResetBio() {
 	m.bio = nil
+	delete(m.clearedFields, userprofile.FieldBio)
 }
 
 // SetProfilePictureID sets the "profile_picture_id" field.
@@ -6281,6 +6294,9 @@ func (m *UserProfileMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UserProfileMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(userprofile.FieldBio) {
+		fields = append(fields, userprofile.FieldBio)
+	}
 	if m.FieldCleared(userprofile.FieldProfilePictureID) {
 		fields = append(fields, userprofile.FieldProfilePictureID)
 	}
@@ -6301,6 +6317,9 @@ func (m *UserProfileMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UserProfileMutation) ClearField(name string) error {
 	switch name {
+	case userprofile.FieldBio:
+		m.ClearBio()
+		return nil
 	case userprofile.FieldProfilePictureID:
 		m.ClearProfilePictureID()
 		return nil

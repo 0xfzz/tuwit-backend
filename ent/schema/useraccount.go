@@ -24,7 +24,7 @@ func (UserAccount) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("email").Unique(),
 		field.String("username").Unique(),
-		field.String("password"),
+		field.Bytes("password"),
 		field.Bool("is_verified").Default(false),
 		field.Bool("is_private").Default(false),
 		field.Bool("is_email_verified").Default(false),

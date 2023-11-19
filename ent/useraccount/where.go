@@ -64,7 +64,7 @@ func Username(v string) predicate.UserAccount {
 }
 
 // Password applies equality check predicate on the "password" field. It's identical to PasswordEQ.
-func Password(v string) predicate.UserAccount {
+func Password(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldEQ(FieldPassword, v))
 }
 
@@ -214,68 +214,43 @@ func UsernameContainsFold(v string) predicate.UserAccount {
 }
 
 // PasswordEQ applies the EQ predicate on the "password" field.
-func PasswordEQ(v string) predicate.UserAccount {
+func PasswordEQ(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldEQ(FieldPassword, v))
 }
 
 // PasswordNEQ applies the NEQ predicate on the "password" field.
-func PasswordNEQ(v string) predicate.UserAccount {
+func PasswordNEQ(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldNEQ(FieldPassword, v))
 }
 
 // PasswordIn applies the In predicate on the "password" field.
-func PasswordIn(vs ...string) predicate.UserAccount {
+func PasswordIn(vs ...[]byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldIn(FieldPassword, vs...))
 }
 
 // PasswordNotIn applies the NotIn predicate on the "password" field.
-func PasswordNotIn(vs ...string) predicate.UserAccount {
+func PasswordNotIn(vs ...[]byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldNotIn(FieldPassword, vs...))
 }
 
 // PasswordGT applies the GT predicate on the "password" field.
-func PasswordGT(v string) predicate.UserAccount {
+func PasswordGT(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldGT(FieldPassword, v))
 }
 
 // PasswordGTE applies the GTE predicate on the "password" field.
-func PasswordGTE(v string) predicate.UserAccount {
+func PasswordGTE(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldGTE(FieldPassword, v))
 }
 
 // PasswordLT applies the LT predicate on the "password" field.
-func PasswordLT(v string) predicate.UserAccount {
+func PasswordLT(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldLT(FieldPassword, v))
 }
 
 // PasswordLTE applies the LTE predicate on the "password" field.
-func PasswordLTE(v string) predicate.UserAccount {
+func PasswordLTE(v []byte) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldLTE(FieldPassword, v))
-}
-
-// PasswordContains applies the Contains predicate on the "password" field.
-func PasswordContains(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldContains(FieldPassword, v))
-}
-
-// PasswordHasPrefix applies the HasPrefix predicate on the "password" field.
-func PasswordHasPrefix(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldHasPrefix(FieldPassword, v))
-}
-
-// PasswordHasSuffix applies the HasSuffix predicate on the "password" field.
-func PasswordHasSuffix(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldHasSuffix(FieldPassword, v))
-}
-
-// PasswordEqualFold applies the EqualFold predicate on the "password" field.
-func PasswordEqualFold(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldEqualFold(FieldPassword, v))
-}
-
-// PasswordContainsFold applies the ContainsFold predicate on the "password" field.
-func PasswordContainsFold(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldContainsFold(FieldPassword, v))
 }
 
 // IsVerifiedEQ applies the EQ predicate on the "is_verified" field.

@@ -41,6 +41,20 @@ func (upu *UserProfileUpdate) SetBio(s string) *UserProfileUpdate {
 	return upu
 }
 
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (upu *UserProfileUpdate) SetNillableBio(s *string) *UserProfileUpdate {
+	if s != nil {
+		upu.SetBio(*s)
+	}
+	return upu
+}
+
+// ClearBio clears the value of the "bio" field.
+func (upu *UserProfileUpdate) ClearBio() *UserProfileUpdate {
+	upu.mutation.ClearBio()
+	return upu
+}
+
 // SetProfilePictureID sets the "profile_picture_id" field.
 func (upu *UserProfileUpdate) SetProfilePictureID(i int) *UserProfileUpdate {
 	upu.mutation.SetProfilePictureID(i)
@@ -178,6 +192,9 @@ func (upu *UserProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := upu.mutation.Bio(); ok {
 		_spec.SetField(userprofile.FieldBio, field.TypeString, value)
 	}
+	if upu.mutation.BioCleared() {
+		_spec.ClearField(userprofile.FieldBio, field.TypeString)
+	}
 	if upu.mutation.AccountCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -294,6 +311,20 @@ func (upuo *UserProfileUpdateOne) SetDisplayName(s string) *UserProfileUpdateOne
 // SetBio sets the "bio" field.
 func (upuo *UserProfileUpdateOne) SetBio(s string) *UserProfileUpdateOne {
 	upuo.mutation.SetBio(s)
+	return upuo
+}
+
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (upuo *UserProfileUpdateOne) SetNillableBio(s *string) *UserProfileUpdateOne {
+	if s != nil {
+		upuo.SetBio(*s)
+	}
+	return upuo
+}
+
+// ClearBio clears the value of the "bio" field.
+func (upuo *UserProfileUpdateOne) ClearBio() *UserProfileUpdateOne {
+	upuo.mutation.ClearBio()
 	return upuo
 }
 
@@ -463,6 +494,9 @@ func (upuo *UserProfileUpdateOne) sqlSave(ctx context.Context) (_node *UserProfi
 	}
 	if value, ok := upuo.mutation.Bio(); ok {
 		_spec.SetField(userprofile.FieldBio, field.TypeString, value)
+	}
+	if upuo.mutation.BioCleared() {
+		_spec.ClearField(userprofile.FieldBio, field.TypeString)
 	}
 	if upuo.mutation.AccountCleared() {
 		edge := &sqlgraph.EdgeSpec{

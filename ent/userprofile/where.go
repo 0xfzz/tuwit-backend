@@ -193,6 +193,16 @@ func BioHasSuffix(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldHasSuffix(FieldBio, v))
 }
 
+// BioIsNil applies the IsNil predicate on the "bio" field.
+func BioIsNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIsNull(FieldBio))
+}
+
+// BioNotNil applies the NotNil predicate on the "bio" field.
+func BioNotNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotNull(FieldBio))
+}
+
 // BioEqualFold applies the EqualFold predicate on the "bio" field.
 func BioEqualFold(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEqualFold(FieldBio, v))

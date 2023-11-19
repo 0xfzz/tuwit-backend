@@ -23,7 +23,7 @@ func (UserProfile) Annotations() []schema.Annotation {
 func (UserProfile) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("display_name"),
-		field.String("bio"),
+		field.Text("bio").Optional(),
 		field.Int("profile_picture_id").Optional(),
 		field.Int("banner_id").Optional(),
 	}

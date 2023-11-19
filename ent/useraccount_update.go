@@ -45,8 +45,8 @@ func (uau *UserAccountUpdate) SetUsername(s string) *UserAccountUpdate {
 }
 
 // SetPassword sets the "password" field.
-func (uau *UserAccountUpdate) SetPassword(s string) *UserAccountUpdate {
-	uau.mutation.SetPassword(s)
+func (uau *UserAccountUpdate) SetPassword(b []byte) *UserAccountUpdate {
+	uau.mutation.SetPassword(b)
 	return uau
 }
 
@@ -370,7 +370,7 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(useraccount.FieldUsername, field.TypeString, value)
 	}
 	if value, ok := uau.mutation.Password(); ok {
-		_spec.SetField(useraccount.FieldPassword, field.TypeString, value)
+		_spec.SetField(useraccount.FieldPassword, field.TypeBytes, value)
 	}
 	if value, ok := uau.mutation.IsVerified(); ok {
 		_spec.SetField(useraccount.FieldIsVerified, field.TypeBool, value)
@@ -697,8 +697,8 @@ func (uauo *UserAccountUpdateOne) SetUsername(s string) *UserAccountUpdateOne {
 }
 
 // SetPassword sets the "password" field.
-func (uauo *UserAccountUpdateOne) SetPassword(s string) *UserAccountUpdateOne {
-	uauo.mutation.SetPassword(s)
+func (uauo *UserAccountUpdateOne) SetPassword(b []byte) *UserAccountUpdateOne {
+	uauo.mutation.SetPassword(b)
 	return uauo
 }
 
@@ -1052,7 +1052,7 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		_spec.SetField(useraccount.FieldUsername, field.TypeString, value)
 	}
 	if value, ok := uauo.mutation.Password(); ok {
-		_spec.SetField(useraccount.FieldPassword, field.TypeString, value)
+		_spec.SetField(useraccount.FieldPassword, field.TypeBytes, value)
 	}
 	if value, ok := uauo.mutation.IsVerified(); ok {
 		_spec.SetField(useraccount.FieldIsVerified, field.TypeBool, value)

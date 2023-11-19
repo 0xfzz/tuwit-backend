@@ -23,7 +23,7 @@ type UserAccount struct {
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Password holds the value of the "password" field.
-	Password string `json:"password,omitempty"`
+	Password []byte `json:"password,omitempty"`
 	// IsVerified holds the value of the "is_verified" field.
 	IsVerified bool `json:"is_verified,omitempty"`
 	// IsPrivate holds the value of the "is_private" field.
@@ -133,11 +133,13 @@ func (*UserAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case useraccount.FieldPassword:
+			values[i] = new([]byte)
 		case useraccount.FieldIsVerified, useraccount.FieldIsPrivate, useraccount.FieldIsEmailVerified:
 			values[i] = new(sql.NullBool)
 		case useraccount.FieldID:
 			values[i] = new(sql.NullInt64)
-		case useraccount.FieldEmail, useraccount.FieldUsername, useraccount.FieldPassword:
+		case useraccount.FieldEmail, useraccount.FieldUsername:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -173,10 +175,10 @@ func (ua *UserAccount) assignValues(columns []string, values []any) error {
 				ua.Username = value.String
 			}
 		case useraccount.FieldPassword:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field password", values[i])
-			} else if value.Valid {
-				ua.Password = value.String
+			} else if value != nil {
+				ua.Password = *value
 			}
 		case useraccount.FieldIsVerified:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -274,7 +276,7 @@ func (ua *UserAccount) String() string {
 	builder.WriteString(ua.Username)
 	builder.WriteString(", ")
 	builder.WriteString("password=")
-	builder.WriteString(ua.Password)
+	builder.WriteString(fmt.Sprintf("%v", ua.Password))
 	builder.WriteString(", ")
 	builder.WriteString("is_verified=")
 	builder.WriteString(fmt.Sprintf("%v", ua.IsVerified))

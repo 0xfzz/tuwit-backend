@@ -33,6 +33,14 @@ func (upc *UserProfileCreate) SetBio(s string) *UserProfileCreate {
 	return upc
 }
 
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (upc *UserProfileCreate) SetNillableBio(s *string) *UserProfileCreate {
+	if s != nil {
+		upc.SetBio(*s)
+	}
+	return upc
+}
+
 // SetProfilePictureID sets the "profile_picture_id" field.
 func (upc *UserProfileCreate) SetProfilePictureID(i int) *UserProfileCreate {
 	upc.mutation.SetProfilePictureID(i)
@@ -118,9 +126,6 @@ func (upc *UserProfileCreate) ExecX(ctx context.Context) {
 func (upc *UserProfileCreate) check() error {
 	if _, ok := upc.mutation.DisplayName(); !ok {
 		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "UserProfile.display_name"`)}
-	}
-	if _, ok := upc.mutation.Bio(); !ok {
-		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "UserProfile.bio"`)}
 	}
 	if _, ok := upc.mutation.AccountID(); !ok {
 		return &ValidationError{Name: "account", err: errors.New(`ent: missing required edge "UserProfile.account"`)}

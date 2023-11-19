@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/0xfzz/tuwitt/config"
 	"github.com/0xfzz/tuwitt/ent/migrate"
 	"github.com/0xfzz/tuwitt/lib"
 )
 
-func StartServer(router lib.Router, config lib.Config, database lib.Database) {
+func StartServer(router lib.Router, database lib.Database) {
 	ctx := context.Background()
 	err := database.DB.Schema.Create(ctx,
 		migrate.WithDropIndex(true),
@@ -17,6 +18,6 @@ func StartServer(router lib.Router, config lib.Config, database lib.Database) {
 	if err != nil {
 		panic("Error Auto Migrate")
 	}
-	addr := fmt.Sprintf(":%d", config.APP.Port)
-	router.App.Run(addr)
+	addr := fmt.Sprintf(":%d", config.Get().APP.Port)
+	router.Gin.Run(addr)
 }

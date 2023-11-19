@@ -4,18 +4,17 @@ import (
 	"fmt"
 
 	"entgo.io/ent/dialect"
+	"github.com/0xfzz/tuwitt/config"
 	"github.com/0xfzz/tuwitt/ent"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type IDatabase interface {
-	Migrate()
-}
 type Database struct {
 	DB *ent.Client
 }
 
-func NewDatabase(config Config) Database {
+func NewDatabase() Database {
+	config := config.Get()
 	var dsn string = fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s",
 		config.DB.Username,
@@ -24,7 +23,6 @@ func NewDatabase(config Config) Database {
 		config.DB.Port,
 		config.DB.Name,
 	)
-	fmt.Print(dsn)
 	client, err := ent.Open(dialect.MySQL, dsn)
 	if err != nil {
 		panic(fmt.Sprintf("Error while establishing database connection : %s", err))

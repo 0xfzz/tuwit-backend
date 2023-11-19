@@ -139,11 +139,6 @@ func ByUsername(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUsername, opts...).ToFunc()
 }
 
-// ByPassword orders the results by the password field.
-func ByPassword(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPassword, opts...).ToFunc()
-}
-
 // ByIsVerified orders the results by the is_verified field.
 func ByIsVerified(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsVerified, opts...).ToFunc()
