@@ -5,7 +5,7 @@ package useraccount
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/0xfzz/tuwitt/ent/predicate"
+	"github.com/0xfzz/tuwit-backend/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.

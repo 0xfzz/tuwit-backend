@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/0xfzz/tuwitt/utils/libfx"
+	"github.com/0xfzz/tuwit-backend/utils/libfx"
 	"go.uber.org/fx"
 )
 

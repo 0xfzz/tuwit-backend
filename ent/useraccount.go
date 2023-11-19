@@ -8,9 +8,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/0xfzz/tuwitt/ent/useraccount"
-	"github.com/0xfzz/tuwitt/ent/usercount"
-	"github.com/0xfzz/tuwitt/ent/userprofile"
+	"github.com/0xfzz/tuwit-backend/ent/useraccount"
+	"github.com/0xfzz/tuwit-backend/ent/usercount"
+	"github.com/0xfzz/tuwit-backend/ent/userprofile"
 )
 
 // UserAccount is the model entity for the UserAccount schema.

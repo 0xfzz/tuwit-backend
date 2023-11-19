@@ -5,13 +5,13 @@ package ent
 import (
 	"time"
 
-	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
-	"github.com/0xfzz/tuwitt/ent/schema"
-	"github.com/0xfzz/tuwitt/ent/thread"
-	"github.com/0xfzz/tuwitt/ent/threadcount"
-	"github.com/0xfzz/tuwitt/ent/useraccount"
-	"github.com/0xfzz/tuwitt/ent/usercount"
-	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
+	"github.com/0xfzz/tuwit-backend/ent/blockedusersrelationship"
+	"github.com/0xfzz/tuwit-backend/ent/schema"
+	"github.com/0xfzz/tuwit-backend/ent/thread"
+	"github.com/0xfzz/tuwit-backend/ent/threadcount"
+	"github.com/0xfzz/tuwit-backend/ent/useraccount"
+	"github.com/0xfzz/tuwit-backend/ent/usercount"
+	"github.com/0xfzz/tuwit-backend/ent/userfollowerrelationship"
 )
 
 // The init function reads all schema descriptors with runtime code

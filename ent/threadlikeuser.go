@@ -8,7 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/0xfzz/tuwitt/ent/threadlikeuser"
+	"github.com/0xfzz/tuwit-backend/ent/threadlikeuser"
 )
 
 // ThreadLikeUser is the model entity for the ThreadLikeUser schema.

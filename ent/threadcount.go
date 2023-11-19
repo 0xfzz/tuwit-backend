@@ -8,8 +8,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/0xfzz/tuwitt/ent/thread"
-	"github.com/0xfzz/tuwitt/ent/threadcount"
+	"github.com/0xfzz/tuwit-backend/ent/thread"
+	"github.com/0xfzz/tuwit-backend/ent/threadcount"
 )
 
 // ThreadCount is the model entity for the ThreadCount schema.

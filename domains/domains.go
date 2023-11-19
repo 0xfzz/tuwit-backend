@@ -1,9 +1,9 @@
 package domains
 
 import (
-	"github.com/0xfzz/tuwitt/domains/auth"
-	"github.com/0xfzz/tuwitt/domains/user"
-	"github.com/0xfzz/tuwitt/utils/libfx"
+	"github.com/0xfzz/tuwit-backend/domains/auth"
+	"github.com/0xfzz/tuwit-backend/domains/user"
+	"github.com/0xfzz/tuwit-backend/utils/libfx"
 	"go.uber.org/fx"
 )
 

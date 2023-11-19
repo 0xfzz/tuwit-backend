@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0xfzz/tuwitt/domains/user/entity"
-	"github.com/0xfzz/tuwitt/ent/predicate"
-	"github.com/0xfzz/tuwitt/lib"
+	"github.com/0xfzz/tuwit-backend/domains/user/entity"
+	"github.com/0xfzz/tuwit-backend/ent/predicate"
+	"github.com/0xfzz/tuwit-backend/lib"
 )
 
 type UserRepository struct {

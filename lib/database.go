@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"entgo.io/ent/dialect"
-	"github.com/0xfzz/tuwitt/config"
-	"github.com/0xfzz/tuwitt/ent"
+	"github.com/0xfzz/tuwit-backend/config"
+	"github.com/0xfzz/tuwit-backend/ent"
 	_ "github.com/go-sql-driver/mysql"
 )
 

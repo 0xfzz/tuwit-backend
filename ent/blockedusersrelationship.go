@@ -9,8 +9,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/0xfzz/tuwitt/ent/blockedusersrelationship"
-	"github.com/0xfzz/tuwitt/ent/useraccount"
+	"github.com/0xfzz/tuwit-backend/ent/blockedusersrelationship"
+	"github.com/0xfzz/tuwit-backend/ent/useraccount"
 )
 
 // BlockedUsersRelationship is the model entity for the BlockedUsersRelationship schema.

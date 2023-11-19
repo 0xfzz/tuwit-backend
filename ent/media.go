@@ -8,7 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/0xfzz/tuwitt/ent/media"
+	"github.com/0xfzz/tuwit-backend/ent/media"
 )
 
 // Media is the model entity for the Media schema.

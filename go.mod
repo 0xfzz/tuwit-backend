@@ -1,4 +1,4 @@
-module github.com/0xfzz/tuwitt
+module github.com/0xfzz/tuwit-backend
 
 go 1.19
 

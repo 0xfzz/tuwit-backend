@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/0xfzz/tuwitt/ent"
+	"github.com/0xfzz/tuwit-backend/ent"
 	// required by schema hooks.
-	_ "github.com/0xfzz/tuwitt/ent/runtime"
+	_ "github.com/0xfzz/tuwit-backend/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/0xfzz/tuwitt/ent/migrate"
+	"github.com/0xfzz/tuwit-backend/ent/migrate"
 )
 
 type (

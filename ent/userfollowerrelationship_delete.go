@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/0xfzz/tuwitt/ent/predicate"
-	"github.com/0xfzz/tuwitt/ent/userfollowerrelationship"
+	"github.com/0xfzz/tuwit-backend/ent/predicate"
+	"github.com/0xfzz/tuwit-backend/ent/userfollowerrelationship"
 )
 
 // UserFollowerRelationshipDelete is the builder for deleting a UserFollowerRelationship entity.

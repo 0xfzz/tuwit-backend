@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/0xfzz/tuwitt/domains"
-	"github.com/0xfzz/tuwitt/lib"
+	"github.com/0xfzz/tuwit-backend/domains"
+	"github.com/0xfzz/tuwit-backend/lib"
 	"go.uber.org/fx"
 )
 

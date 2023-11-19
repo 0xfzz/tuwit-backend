@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
-	"github.com/0xfzz/tuwitt/domains/auth/dto"
-	"github.com/0xfzz/tuwitt/lib"
-	"github.com/0xfzz/tuwitt/utils/response"
+	"github.com/0xfzz/tuwit-backend/domains/auth/dto"
+	"github.com/0xfzz/tuwit-backend/lib"
+	"github.com/0xfzz/tuwit-backend/utils/response"
 	"github.com/gin-gonic/gin"
 )
 

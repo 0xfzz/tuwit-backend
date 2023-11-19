@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"github.com/0xfzz/tuwitt/domains/auth/dto"
-	"github.com/0xfzz/tuwitt/domains/user"
-	"github.com/0xfzz/tuwitt/domains/user/entity"
-	"github.com/0xfzz/tuwitt/ent/useraccount"
-	"github.com/0xfzz/tuwitt/utils/hash"
-	"github.com/0xfzz/tuwitt/utils/token"
+	"github.com/0xfzz/tuwit-backend/domains/auth/dto"
+	"github.com/0xfzz/tuwit-backend/domains/user"
+	"github.com/0xfzz/tuwit-backend/domains/user/entity"
+	"github.com/0xfzz/tuwit-backend/ent/useraccount"
+	"github.com/0xfzz/tuwit-backend/utils/hash"
+	"github.com/0xfzz/tuwit-backend/utils/token"
 	"github.com/golang-jwt/jwt/v5"
 )
 

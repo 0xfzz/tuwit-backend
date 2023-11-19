@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/0xfzz/tuwitt/config"
+	"github.com/0xfzz/tuwit-backend/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 

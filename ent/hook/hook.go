@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0xfzz/tuwitt/ent"
+	"github.com/0xfzz/tuwit-backend/ent"
 )
 
 // The BlockedUsersRelationshipFunc type is an adapter to allow the use of ordinary

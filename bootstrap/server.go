@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0xfzz/tuwitt/config"
-	"github.com/0xfzz/tuwitt/ent/migrate"
-	"github.com/0xfzz/tuwitt/lib"
+	"github.com/0xfzz/tuwit-backend/config"
+	"github.com/0xfzz/tuwit-backend/ent/migrate"
+	"github.com/0xfzz/tuwit-backend/lib"
 )
 
 func StartServer(router lib.Router, database lib.Database) {

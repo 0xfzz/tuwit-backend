@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/0xfzz/tuwitt/ent/predicate"
-	"github.com/0xfzz/tuwitt/ent/threadlikeuser"
+	"github.com/0xfzz/tuwit-backend/ent/predicate"
+	"github.com/0xfzz/tuwit-backend/ent/threadlikeuser"
 )
 
 // ThreadLikeUserUpdate is the builder for updating ThreadLikeUser entities.

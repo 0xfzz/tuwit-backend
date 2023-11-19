@@ -4,7 +4,7 @@ package threadlikeuser
 
 import (
 	"entgo.io/ent/dialect/sql"
-	"github.com/0xfzz/tuwitt/ent/predicate"
+	"github.com/0xfzz/tuwit-backend/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.

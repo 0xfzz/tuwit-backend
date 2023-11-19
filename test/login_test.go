@@ -9,11 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/0xfzz/tuwitt/domains/auth/dto"
-	"github.com/0xfzz/tuwitt/domains/user"
-	"github.com/0xfzz/tuwitt/domains/user/entity"
-	"github.com/0xfzz/tuwitt/test/mock"
-	"github.com/0xfzz/tuwitt/utils/hash"
+	"github.com/0xfzz/tuwit-backend/domains/auth/dto"
+	"github.com/0xfzz/tuwit-backend/domains/user"
+	"github.com/0xfzz/tuwit-backend/domains/user/entity"
+	"github.com/0xfzz/tuwit-backend/test/mock"
+	"github.com/0xfzz/tuwit-backend/utils/hash"
 	"github.com/stretchr/testify/require"
 )
 
